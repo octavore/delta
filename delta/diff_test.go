@@ -15,7 +15,7 @@ bbb
 ccc
   `
 	d := Diff(a, b)
-	t.Fatal(d.html())
+	t.Fatal(d.HTML())
 }
 
 func TestChange(t *testing.T) {
@@ -30,7 +30,7 @@ ddd
 ccc
   `
 	d := Diff(a, b)
-	t.Fatal(d.html())
+	t.Fatal(d.HTML())
 }
 
 func TestTranspose(t *testing.T) {
@@ -45,5 +45,5 @@ ccc
 bbb
   `
 	d := Diff(a, b)
-	t.Fatal(d.html())
+	t.Fatal(d.HTML())
 }
