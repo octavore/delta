@@ -1,6 +1,7 @@
 package delta
 
 import (
+	"html"
 	"strconv"
 )
 
@@ -35,34 +36,41 @@ func (d *DiffSolution) HTML() string {
 			li++
 			lg += "<div class='line line-a line-number line-addition'>" + strconv.Itoa(li) + "</div>\n"
 			rg += "<div class='line line-b'></div>\n"
-			left += "<div class='line line-a line-addition'>" + l[0] + "</div>\n"
+			left += "<div class='line line-a line-addition'>" + html.EscapeString(l[0]) + "</div>\n"
 			right += "<div class='line line-b'></div>\n"
 		} else if l[2] == string(LineFromB) {
 			ri++
 			lg += "<div class='line line-a'></div>\n"
 			rg += "<div class='line line-b line-number line-addition'>" + strconv.Itoa(ri) + "</div>\n"
 			left += "<div class='line line-a'></div>\n"
-			right += "<div class='line line-b line-addition'>" + l[1] + "</div>\n"
+			right += "<div class='line line-b line-addition'>" + html.EscapeString(l[1]) + "</div>\n"
 		} else if l[2] == string(LineFromBothEdit) || l[0] != l[1] {
 			li++
 			ri++
 			lg += "<div class='line line-a line-number line-mismatch'>" + strconv.Itoa(li) + "</div>\n"
 			rg += "<div class='line line-b line-number line-mismatch'>" + strconv.Itoa(ri) + "</div>\n"
-			left += "<div class='line line-a line-mismatch'>" + l[0] + "</div>\n"
-			right += "<div class='line line-b line-mismatch'>" + l[1] + "</div>\n"
+			left += "<div class='line line-a line-mismatch'>" + html.EscapeString(l[0]) + "</div>\n"
+			right += "<div class='line line-b line-mismatch'>" + html.EscapeString(l[1]) + "</div>\n"
 		} else if l[2] == string(LineFromBoth) {
 			li++
 			ri++
 			lg += "<div class='line line-a line-number line-match'>" + strconv.Itoa(li) + "</div>\n"
 			rg += "<div class='line line-b line-number line-match'>" + strconv.Itoa(ri) + "</div>\n"
-			left += "<div class='line line-a line-match'>" + l[0] + "</div>\n"
-			right += "<div class='line line-b line-match'>" + l[1] + "</div>\n"
+			left += "<div class='line line-a line-match'>" + html.EscapeString(l[0]) + "</div>\n"
+			right += "<div class='line line-b line-match'>" + html.EscapeString(l[1]) + "</div>\n"
 		}
 	}
 	lg += "</div>\n"
 	rg += "</div>\n"
 	left += "</div></div>\n"
 	right += "</div></div>\n"
-
+	if li == 0 {
+		lg = ""
+		left = ""
+	}
+	if ri == 0 {
+		rg = ""
+		right = ""
+	}
 	return lg + left + rg + right
 }
