@@ -24,7 +24,7 @@ type Differ struct {
 
 type lineSource string
 
-var (
+const (
 	Unknown          lineSource = ""
 	LineFromA        lineSource = "<"
 	LineFromB        lineSource = ">"
