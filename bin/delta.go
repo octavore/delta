@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"net/url"
 	"os"
@@ -26,7 +27,7 @@ func main() {
 	}
 }
 
-func openDiff(pathFrom, pathTo string) {
+func openDiffPaths(pathFrom, pathTo string) {
 	dir, _ := os.Getwd()
 	u, _ := url.Parse("delta://open")
 	v := url.Values{}
@@ -37,19 +38,48 @@ func openDiff(pathFrom, pathTo string) {
 	exec.Command("open", u.String()).Run()
 }
 
-func printDiff(pathFrom, pathTo string, html bool) {
+func openDiff(pathFrom, pathTo string) {
+	d, err := diff(pathFrom, pathTo)
+	if err != nil {
+		os.Stderr.WriteString(err.Error())
+		return
+	}
+	f, err := ioutil.TempFile("", "delta-diff")
+	if err != nil {
+		os.Stderr.WriteString(err.Error())
+		return
+	}
+	io.WriteString(f, d.HTML())
+
+	dir, _ := os.Getwd()
+	u, _ := url.Parse("delta://openset")
+	v := url.Values{}
+	v.Add("base", dir)
+	v.Add("left", pathFrom)
+	v.Add("right", pathTo)
+	v.Add("diff", f.Name())
+	u.RawQuery = v.Encode()
+	exec.Command("open", u.String()).Run()
+}
+
+func diff(pathFrom, pathTo string) (*delta.DiffSolution, error) {
 	from, err := ioutil.ReadFile(pathFrom)
 	if err != nil {
-		os.Stderr.WriteString(fmt.Sprintf("error reading %q: %v", pathFrom, err))
-		return
+		return nil, fmt.Errorf("error reading %q: %v", pathFrom, err)
 	}
 	to, err := ioutil.ReadFile(pathTo)
 	if err != nil {
-		os.Stderr.WriteString(fmt.Sprintf("error reading %q: %v", pathTo, err))
+		return nil, fmt.Errorf("error reading %q: %v", pathTo, err)
+	}
+	return delta.Diff(string(from), string(to)), nil
+}
+
+func printDiff(pathFrom, pathTo string, html bool) {
+	d, err := diff(pathFrom, pathTo)
+	if err != nil {
+		os.Stderr.WriteString(err.Error())
 		return
 	}
-
-	d := delta.Diff(string(from), string(to))
 	if html {
 		fmt.Println(d.HTML())
 	} else {
