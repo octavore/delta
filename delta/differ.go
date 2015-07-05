@@ -17,9 +17,10 @@ func Diff(a, b string) *DiffSolution {
 type Differ struct {
 	a        []string
 	b        []string
-	weights  Weights
-	ab       [][]int32
-	solution [][]lineSource
+	ab       [][]int32      // a x b score matrix
+	solution [][]lineSource // a x b results matrix
+
+	weights Weights
 }
 
 type lineSource string
@@ -57,9 +58,9 @@ type Weights struct {
 }
 
 var defaultWeights = Weights{
-	Deletion: -1,
-	Match:    1,
-	Mismatch: 0,
+	Deletion: -2,
+	Match:    100, // we _really_ like matches
+	Mismatch: -1,
 	NewMode:  0,
 }
 
@@ -97,22 +98,23 @@ const (
 // computeOptimal computes the optimal (maximum) score, which
 // corresponds to the best diff
 func (d *Differ) computeOptimal(ai, bi int, m blockMode) int32 {
+	// base case: no more lines to align
+	if ai > len(d.a)-1 || bi > len(d.b)-1 {
+		return 0
+	}
+
 	// return memoized result
 	if i := d.solution[ai][bi]; i != Unknown {
 		return d.ab[ai][bi]
 	}
 
-	// base case: no more lines to align
-	if ai == len(d.a)-1 && bi == len(d.b)-1 {
-		return 0
-	}
-
 	// initialize score to infinity
 	d.ab[ai][bi] = -math.MaxInt32
 
-	// skip a, addition in b/deletion in a
-	if ai < len(d.a)-1 {
-		s := d.computeOptimal(ai+1, bi, modeDeleteA) + d.weights.Deletion
+	// case: skip a, addition in b (deletion in a)
+	if ai < len(d.a) {
+		s := d.computeOptimal(ai+1, bi, modeDeleteA)
+		s += d.weights.Deletion
 		if m != modeDeleteA {
 			s += d.weights.NewMode
 		}
@@ -122,9 +124,10 @@ func (d *Differ) computeOptimal(ai, bi int, m blockMode) int32 {
 		}
 	}
 
-	// skip b, addition in a/deletion in b
-	if bi < len(d.b)-1 {
-		s := d.computeOptimal(ai, bi+1, modeDeleteB) + d.weights.Deletion
+	// case: skip b, addition in a (deletion in b)
+	if bi < len(d.b) {
+		s := d.computeOptimal(ai, bi+1, modeDeleteB)
+		s += d.weights.Deletion
 		if m != modeDeleteB {
 			s += d.weights.NewMode
 		}
@@ -135,10 +138,11 @@ func (d *Differ) computeOptimal(ai, bi int, m blockMode) int32 {
 	}
 
 	// align lines
-	if ai < len(d.a)-1 && bi < len(d.b)-1 {
+	if ai < len(d.a) && bi < len(d.b) {
 		var n blockMode
 		var s int32
 		if strings.TrimSpace(d.a[ai]) == strings.TrimSpace(d.b[bi]) {
+			// if d.a[ai] == d.b[bi] {
 			n = modeMatch
 			s = d.weights.Match
 		} else {
@@ -177,21 +181,20 @@ func (d *Differ) debug() string {
 // this needs a second pass which minimizes number of change blocks
 func (d *Differ) getSolution(s *DiffSolution, a, b int) {
 	// iterate until no more string
-	for a != len(d.a)-1 || b != len(d.b)-1 {
+	for a < len(d.a) || b < len(d.b) {
 		// no more a
-		if a == len(d.a)-1 {
+		if a == len(d.a) {
 			s.addLineB(d.b[b])
 			b++
 			continue
 		}
 
 		// no more b
-		if b == len(d.b)-1 {
+		if b == len(d.b) {
 			s.addLineA(d.a[a])
 			a++
 			continue
 		}
-
 		switch d.solution[a][b] {
 		case LineFromA:
 			s.addLineA(d.a[a])
@@ -203,6 +206,8 @@ func (d *Differ) getSolution(s *DiffSolution, a, b int) {
 			s.addLine(d.a[a], d.b[b], d.solution[a][b])
 			a++
 			b++
+		default:
+			panic("unset line")
 		}
 	}
 }
