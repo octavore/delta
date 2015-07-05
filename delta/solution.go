@@ -73,6 +73,9 @@ func (d *DiffSolution) HTML() string {
 			if closestChange > nextChange[i] {
 				closestChange = nextChange[i]
 			}
+			if closestChange == maxContext {
+				closestChange = -1
+			}
 		} else {
 			lastChangedLine = i
 		}
