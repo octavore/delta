@@ -118,7 +118,7 @@ func (d *Differ) computeOptimal(ai, bi int, m blockMode) int32 {
 		if m != modeDeleteA {
 			s += d.weights.NewMode
 		}
-		if s > d.ab[ai][bi] {
+		if s >= d.ab[ai][bi] {
 			d.ab[ai][bi] = s
 			d.solution[ai][bi] = LineFromA
 		}
@@ -131,7 +131,7 @@ func (d *Differ) computeOptimal(ai, bi int, m blockMode) int32 {
 		if m != modeDeleteB {
 			s += d.weights.NewMode
 		}
-		if s > d.ab[ai][bi] {
+		if s >= d.ab[ai][bi] {
 			d.ab[ai][bi] = s
 			d.solution[ai][bi] = LineFromB
 		}
@@ -153,7 +153,7 @@ func (d *Differ) computeOptimal(ai, bi int, m blockMode) int32 {
 		if m != n {
 			s += d.weights.NewMode
 		}
-		if s > d.ab[ai][bi] {
+		if s >= d.ab[ai][bi] {
 			d.ab[ai][bi] = s
 			// todo: consolidate with n
 			if n == modeMatch {
