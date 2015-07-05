@@ -83,6 +83,17 @@ func printDiff(pathFrom, pathTo string, html bool) {
 	if html {
 		fmt.Println(d.HTML())
 	} else {
-		fmt.Println(d.Raw())
+		for i, l := range d.Raw() {
+			if l[2] == "=" && l[0] == l[1] {
+				fmt.Printf("%d %s = %s \n", i, l[2], l[0])
+				continue
+			}
+			if l[0] != "" {
+				fmt.Printf("\x1b[31m%d %s < %s\x1b[0m\n", i, l[2], l[0])
+			}
+			if l[1] != "" {
+				fmt.Printf("\x1b[32m%d %s > %s\x1b[0m\n", i, l[2], l[1])
+			}
+		}
 	}
 }
