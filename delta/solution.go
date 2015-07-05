@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"html/template"
 	"strconv"
+	"strings"
 )
 
 // DiffSolution contains a set of lines, where each element of
@@ -122,7 +123,9 @@ func (d *DiffSolution) HTML() string {
 	if ri == 0 {
 		return lg.String() + lb.String()
 	}
-	return lg.String() + lb.String() + rg.String() + rb.String()
+	lbs := strings.Replace(lb.String(), "\t", "<span class='delta-tab'>\t</span>", -1)
+	rbs := strings.Replace(rb.String(), "\t", "<span class='delta-tab'>\t</span>", -1)
+	return lg.String() + lbs + rg.String() + rbs
 }
 
 func must(err error) {
