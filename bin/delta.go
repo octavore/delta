@@ -8,6 +8,7 @@ import (
 	"net/url"
 	"os"
 	"os/exec"
+	"strings"
 
 	"bitbucket.org/pancakeio/delta/delta"
 )
@@ -38,6 +39,8 @@ func openDiffPaths(pathFrom, pathTo string) {
 	exec.Command("open", u.String()).Run()
 }
 
+// openDiffs diffs the given files and writes the result to a tempfile,
+// then opens it in the gui.
 func openDiff(pathFrom, pathTo string) {
 	d, err := diff(pathFrom, pathTo)
 	if err != nil {
@@ -54,6 +57,15 @@ func openDiff(pathFrom, pathTo string) {
 	dir, _ := os.Getwd()
 	u, _ := url.Parse("delta://openset")
 	v := url.Values{}
+
+	tmpFrom := strings.HasPrefix(pathFrom, os.TempDir())
+	tmpTo := strings.HasPrefix(pathTo, os.TempDir())
+	if tmpFrom && !tmpTo {
+		pathFrom = pathTo
+	} else if !tmpFrom && tmpTo {
+		pathTo = pathFrom
+	}
+
 	v.Add("base", dir)
 	v.Add("left", pathFrom)
 	v.Add("right", pathTo)
@@ -62,6 +74,7 @@ func openDiff(pathFrom, pathTo string) {
 	exec.Command("open", u.String()).Run()
 }
 
+// diff reads in files in pathFrom and pathTo, and returns a diff
 func diff(pathFrom, pathTo string) (*delta.DiffSolution, error) {
 	from, err := ioutil.ReadFile(pathFrom)
 	if err != nil {
