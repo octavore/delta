@@ -1,9 +1,11 @@
 package delta
 
 import (
+	"bytes"
 	"math"
 	"strconv"
 	"strings"
+	"unicode"
 )
 
 // Diff two strings and return a Differ with the solution
@@ -11,7 +13,36 @@ func Diff(a, b string) *DiffSolution {
 	aw := strings.Split(a, "\n")
 	bw := strings.Split(b, "\n")
 	d := NewDiffer(aw, bw)
+	d.ignoreWhitespace = true
 	return d.Solve()
+}
+
+func splitLine(s string) []string {
+	ws := []string{}
+	w := &bytes.Buffer{}
+	for _, r := range s {
+		_, err := w.WriteRune(r)
+		if err != nil {
+			panic(err)
+		}
+		if !unicode.IsLetter(r) && !unicode.IsNumber(r) {
+			ws = append(ws, w.String())
+			w.Reset()
+		}
+	}
+	if w.Len() != 0 {
+		ws = append(ws, w.String())
+	}
+	return ws
+}
+
+func DiffLine(a, b string) *DiffSolution {
+	aw := splitLine(a)
+	bw := splitLine(b)
+	if len(aw)*len(bw) > 100000000 {
+		return nil
+	}
+	return NewDiffer(aw, bw).Solve()
 }
 
 type Differ struct {
@@ -20,7 +51,8 @@ type Differ struct {
 	ab       [][]int32      // a x b score matrix
 	solution [][]lineSource // a x b results matrix
 
-	weights Weights
+	ignoreWhitespace bool
+	weights          Weights
 }
 
 type lineSource string
@@ -64,6 +96,13 @@ var defaultWeights = Weights{
 	NewMode:  0,
 }
 
+func (d *Differ) isLineEqual(a, b string) bool {
+	if d.ignoreWhitespace {
+		return strings.TrimSpace(a) == strings.TrimSpace(b)
+	}
+	return a == b
+}
+
 func (d *Differ) Solve() *DiffSolution {
 	s := &DiffSolution{}
 	m := modeBeginning
@@ -87,7 +126,7 @@ func (d *Differ) Solve() *DiffSolution {
 	// copy over shared prefix
 	var i int
 	for ; i < len(d.a) && i < len(d.b); i++ {
-		if strings.TrimSpace(d.a[i]) != strings.TrimSpace(d.b[i]) {
+		if !d.isLineEqual(d.a[i], d.b[i]) {
 			break
 		}
 		s.addLine(d.a[i], d.b[i], LineFromBoth)
@@ -121,10 +160,9 @@ func (d *Differ) computeOptimal(ai, bi int, m blockMode) int32 {
 	}
 
 	// return memoized result
-	if i := d.solution[ai][bi]; i != Unknown {
+	if d.solution[ai][bi] != Unknown {
 		return d.ab[ai][bi]
 	}
-
 	// initialize score to infinity
 	d.ab[ai][bi] = -math.MaxInt32
 
@@ -158,8 +196,7 @@ func (d *Differ) computeOptimal(ai, bi int, m blockMode) int32 {
 	if ai < len(d.a) && bi < len(d.b) {
 		var n blockMode
 		var s int32
-		if strings.TrimSpace(d.a[ai]) == strings.TrimSpace(d.b[bi]) {
-			// if d.a[ai] == d.b[bi] {
+		if d.isLineEqual(d.a[ai], d.b[bi]) {
 			n = modeMatch
 			s = d.weights.Match
 		} else {

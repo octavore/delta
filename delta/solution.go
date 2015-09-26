@@ -27,13 +27,18 @@ func (d *DiffSolution) addLine(a, b string, l lineSource) {
 	d.lines = append(d.lines, [3]string{a, b, string(l)})
 }
 
+func (d *DiffSolution) addSolution(e *DiffSolution) {
+	d.lines = append(d.lines, e.lines...)
+}
+
 func (d *DiffSolution) Raw() [][3]string {
 	return d.lines
 }
 
-var tpl = template.Must(template.New("div").Parse("<div class='{{.Classes}}'>{{.Contents}}</div>\n"))
+var div = template.Must(template.New("div").Parse("<div class='{{.Classes}}'>{{.Contents}}</div>\n"))
+var span = template.Must(template.New("span").Parse("<span class='{{.Classes}}'>{{.Contents}}</span>"))
 
-type div struct {
+type elem struct {
 	Classes  string
 	Contents interface{}
 }
@@ -42,6 +47,28 @@ var svgClasses = map[lineSource]string{
 	LineFromA:        "add",
 	LineFromB:        "del",
 	LineFromBothEdit: "edit",
+}
+
+func (d *DiffSolution) HTMLLine() (string, string) {
+	a := &bytes.Buffer{}
+	b := &bytes.Buffer{}
+	for _, word := range d.lines {
+		switch lineSource(word[2]) {
+		case LineFromA:
+			span.Execute(a, elem{"w-add", word[0]})
+			span.Execute(b, elem{"w-del", ""})
+		case LineFromB:
+			span.Execute(a, elem{"w-del", ""})
+			span.Execute(b, elem{"w-add", word[1]})
+		case LineFromBothEdit:
+			span.Execute(a, elem{"w-edit", word[0]})
+			span.Execute(b, elem{"w-edit", word[1]})
+		case LineFromBoth:
+			a.WriteString(template.HTMLEscapeString(word[0]))
+			b.WriteString(template.HTMLEscapeString(word[1]))
+		}
+	}
+	return a.String(), b.String()
 }
 
 // HTML builds up a html-friendly diff.
@@ -105,37 +132,45 @@ func (d *DiffSolution) HTML() string {
 		lc := "line-context-" + strconv.Itoa(closestChange) + " line "
 		if ls == LineFromA {
 			li++
-			must(tpl.Execute(lg, div{lc + "line-a line-addition", li}))
-			must(tpl.Execute(rg, div{lc + "line-b", ""}))
-			must(tpl.Execute(lb, div{lc + "line-a line-addition", l[0]}))
-			must(tpl.Execute(rb, div{lc + "line-b", ""}))
+			must(div.Execute(lg, elem{lc + "line-a line-addition", li}))
+			must(div.Execute(rg, elem{lc + "line-b", ""}))
+			must(div.Execute(lb, elem{lc + "line-a line-addition", l[0]}))
+			must(div.Execute(rb, elem{lc + "line-b", ""}))
 		} else if ls == LineFromB {
 			ri++
-			must(tpl.Execute(lg, div{lc + "line-a", ""}))
-			must(tpl.Execute(rg, div{lc + "line-b line-addition", ri}))
-			must(tpl.Execute(lb, div{lc + "line-a", ""}))
-			must(tpl.Execute(rb, div{lc + "line-b line-addition", l[1]}))
+			must(div.Execute(lg, elem{lc + "line-a", ""}))
+			must(div.Execute(rg, elem{lc + "line-b line-addition", ri}))
+			must(div.Execute(lb, elem{lc + "line-a", ""}))
+			must(div.Execute(rb, elem{lc + "line-b line-addition", l[1]}))
 		} else if ls == LineFromBothEdit {
 			li++
 			ri++
-			must(tpl.Execute(lg, div{lc + "line-a line-mismatch", li}))
-			must(tpl.Execute(rg, div{lc + "line-b line-mismatch", ri}))
-			must(tpl.Execute(lb, div{lc + "line-a line-mismatch", l[0]}))
-			must(tpl.Execute(rb, div{lc + "line-b line-mismatch", l[1]}))
+			dl, dr := "", ""
+			sol := DiffLine(l[0], l[1])
+			if sol != nil {
+				dl, dr = sol.HTMLLine()
+			} else {
+				dl = template.HTMLEscapeString(l[0])
+				dr = template.HTMLEscapeString(l[1])
+			}
+			must(div.Execute(lg, elem{lc + "line-a line-mismatch", li}))
+			must(div.Execute(rg, elem{lc + "line-b line-mismatch", ri}))
+			must(div.Execute(lb, elem{lc + "line-a line-mismatch", template.HTML(dl)}))
+			must(div.Execute(rb, elem{lc + "line-b line-mismatch", template.HTML(dr)}))
 		} else if l[0] != l[1] {
 			li++
 			ri++
-			must(tpl.Execute(lg, div{lc + "line-a line-ws", li}))
-			must(tpl.Execute(rg, div{lc + "line-b line-ws", ri}))
-			must(tpl.Execute(lb, div{lc + "line-a line-ws", l[0]}))
-			must(tpl.Execute(rb, div{lc + "line-b line-ws", l[1]}))
+			must(div.Execute(lg, elem{lc + "line-a line-ws", li}))
+			must(div.Execute(rg, elem{lc + "line-b line-ws", ri}))
+			must(div.Execute(lb, elem{lc + "line-a line-ws", l[0]}))
+			must(div.Execute(rb, elem{lc + "line-b line-ws", l[1]}))
 		} else if ls == LineFromBoth {
 			li++
 			ri++
-			must(tpl.Execute(lg, div{lc + "line-a line-match", li}))
-			must(tpl.Execute(rg, div{lc + "line-b line-match", ri}))
-			must(tpl.Execute(lb, div{lc + "line-a line-match", l[0]}))
-			must(tpl.Execute(rb, div{lc + "line-b line-match", l[1]}))
+			must(div.Execute(lg, elem{lc + "line-a line-match", li}))
+			must(div.Execute(rg, elem{lc + "line-b line-match", ri}))
+			must(div.Execute(lb, elem{lc + "line-a line-match", l[0]}))
+			must(div.Execute(rb, elem{lc + "line-b line-match", l[1]}))
 		}
 	}
 
