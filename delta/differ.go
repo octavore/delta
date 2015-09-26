@@ -67,6 +67,23 @@ var defaultWeights = Weights{
 func (d *Differ) Solve() *DiffSolution {
 	s := &DiffSolution{}
 	m := modeBeginning
+
+	// right only?
+	if len(d.a) == 1 && d.a[0] == "" {
+		for _, l := range d.b {
+			s.addLineB(l)
+		}
+		return s
+	}
+
+	// left only?
+	if len(d.b) == 1 && d.b[0] == "" {
+		for _, l := range d.a {
+			s.addLineA(l)
+		}
+		return s
+	}
+
 	// copy over shared prefix
 	var i int
 	for ; i < len(d.a) && i < len(d.b); i++ {

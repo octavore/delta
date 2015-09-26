@@ -2,6 +2,7 @@ package delta
 
 import (
 	"bytes"
+	"fmt"
 	"html/template"
 	"strconv"
 	"strings"
@@ -37,6 +38,12 @@ type div struct {
 	Contents interface{}
 }
 
+var svgClasses = map[lineSource]string{
+	LineFromA:        "add",
+	LineFromB:        "del",
+	LineFromBothEdit: "edit",
+}
+
 // HTML builds up a html-friendly diff.
 func (d *DiffSolution) HTML() string {
 	// closest contains the number of lines to the next changed lines
@@ -65,8 +72,24 @@ func (d *DiffSolution) HTML() string {
 	lb := bytes.NewBufferString("<div id='diff-left' class='diff-pane'><div class='diff-pane-contents'>\n")
 	rb := bytes.NewBufferString("<div id='diff-right' class='diff-pane'><div class='diff-pane-contents'>\n")
 	lastChangedLine = -maxContext
+
+	lastSource := LineFromBoth
+	lineHeight := 16
+	ll := bytes.NewBufferString(fmt.Sprintf(`<div><svg width="16" height="%d">`, lineHeight*len(d.lines)))
+
 	for i, l := range d.lines {
 		ls := lineSource(l[2])
+		if ls != lastSource {
+			lastSource = ls
+			if l[0] != l[1] {
+				ll.WriteString(
+					fmt.Sprintf(`<line x1="%d" x2="%d" y1="%d" y2="%d" stroke-width="1" class="connector-%s" />`,
+						0, 16, lineHeight*li, lineHeight*ri, svgClasses[lastSource],
+					),
+				)
+			}
+		}
+
 		closestChange := 0
 		if ls == LineFromBoth && l[0] == l[1] {
 			closestChange = i - lastChangedLine
@@ -120,14 +143,15 @@ func (d *DiffSolution) HTML() string {
 	rg.WriteString("</div>")
 	lb.WriteString("</div></div>")
 	rb.WriteString("</div></div>")
-	if li == 0 {
-		return rg.String() + rb.String()
-	}
-	if ri == 0 {
-		return lg.String() + lb.String()
-	}
+	ll.WriteString("</div>")
 	lbs := strings.Replace(lb.String(), "\t", "<span class='delta-tab'>\t</span>", -1)
 	rbs := strings.Replace(rb.String(), "\t", "<span class='delta-tab'>\t</span>", -1)
+	if li == 0 {
+		return rg.String() + rbs
+	}
+	if ri == 0 {
+		return lg.String() + lbs
+	}
 	return lg.String() + lbs + rg.String() + rbs
 }
 

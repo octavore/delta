@@ -20,6 +20,10 @@ func main() {
 
 	pathFrom := flag.Arg(0)
 	pathTo := flag.Arg(1)
+	base := os.Getenv("BASE")
+	fmt.Println(pathTo)
+	fmt.Println(os.Getenv("BASE"))
+	fmt.Println()
 
 	if *open {
 		openDiff(pathFrom, pathTo)
