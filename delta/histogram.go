@@ -175,6 +175,7 @@ func (h *HistogramDiffer) Solve() *DiffSolution {
 	a := h.a[prevRegion.aEnd:len(h.a)]
 	b := h.b[prevRegion.bEnd:len(h.b)]
 	s.addSolution(NewDiffer(a, b).Solve())
+	s.PostProcess()
 	return s
 }
 

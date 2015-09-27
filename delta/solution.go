@@ -12,7 +12,7 @@ import (
 // lines comprises the left and right line, and whether the change
 // was from A or B.
 type DiffSolution struct {
-	lines [][3]string
+	lines [][3]string // todo: typedef [3]string
 }
 
 func (d *DiffSolution) addLineA(a string) {
@@ -47,6 +47,48 @@ var svgClasses = map[lineSource]string{
 	LineFromA:        "add",
 	LineFromB:        "del",
 	LineFromBothEdit: "edit",
+}
+
+// PostProcess loops over the solution. For each changed region, see if we can
+// move it forward. i.e. if we have the following changeset:
+// 	 a [b c d] b c
+// then we move the modified region forward so we have instead:
+//   a b c [d b c]
+// this heuristic only moves additions or deletions (but never both in a move).
+func (d *DiffSolution) PostProcess() {
+	lastChangeStartIndex := -1
+	lastChangeType := Unknown
+	lastLineType := LineFromBoth
+	for i, word := range d.lines {
+		currentLineType := lineSource(word[2])
+		// we've reached the end of a region. Now we try to move forward.
+		if currentLineType == LineFromBoth && currentLineType != lastLineType {
+			if lastChangeType != LineFromB && lastChangeType != LineFromA {
+				// don't try to move if it wasn't an addition or deletion
+				goto ContinueProcessing
+			}
+			p1 := lastChangeStartIndex
+			p2 := i
+			for ((lastChangeType == LineFromA && d.lines[p1][0] == d.lines[p2][0]) ||
+				(lastChangeType == LineFromB && d.lines[p1][1] == d.lines[p2][1])) &&
+				lineSource(d.lines[p2][2]) == LineFromBoth {
+				d.lines[p1], d.lines[p2] = d.lines[p2], d.lines[p1]
+				p1 += 1
+				p2 += 1
+				if p2 >= len(d.lines) {
+					break
+				}
+			}
+		}
+		// we've reached the beginning of a region. Update pointers.
+		if lastLineType == LineFromBoth && currentLineType != lastLineType {
+			lastChangeStartIndex = i
+			lastChangeType = currentLineType
+		}
+
+	ContinueProcessing:
+		lastLineType = currentLineType
+	}
 }
 
 func (d *DiffSolution) HTMLLine() (string, string) {
