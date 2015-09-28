@@ -12,6 +12,7 @@ import (
 	"strings"
 
 	"bitbucket.org/pancakeio/delta/delta"
+	"bitbucket.org/pancakeio/delta/delta/formatter"
 )
 
 func main() {
@@ -19,10 +20,10 @@ func main() {
 	html := flag.Bool("html", false, "print out html")
 	cpuprofile := flag.String("cpuprofile", "", "write cpu profile to file")
 	flag.Parse()
-
-	pathFrom := flag.Arg(0)
-	pathTo := flag.Arg(1)
-	pathBase := os.Getenv("BASE")
+	if flag.NArg() < 2 {
+		flag.PrintDefaults()
+		return
+	}
 
 	if *cpuprofile != "" {
 		f, err := os.Create(*cpuprofile)
@@ -33,11 +34,14 @@ func main() {
 		defer pprof.StopCPUProfile()
 	}
 
+	pathFrom := flag.Arg(0)
+	pathTo := flag.Arg(1)
+	pathBase := os.Getenv("BASE")
 	if *open {
 		openDiff(pathBase, pathFrom, pathTo)
-	} else {
-		printDiff(pathFrom, pathTo, *html)
+		return
 	}
+	printDiff(pathFrom, pathTo, *html)
 }
 
 // openDiffs diffs the given files and writes the result to a tempfile,
@@ -53,7 +57,7 @@ func openDiff(pathBase, pathFrom, pathTo string) {
 		os.Stderr.WriteString(err.Error())
 		return
 	}
-	io.WriteString(f, d.HTML())
+	io.WriteString(f, formatter.HTML(d))
 
 	dir, _ := os.Getwd()
 	u, _ := url.Parse("delta://openset")
@@ -96,20 +100,8 @@ func printDiff(pathFrom, pathTo string, html bool) {
 		return
 	}
 	if html {
-		fmt.Println(d.HTML())
+		fmt.Println(formatter.HTML(d))
 		return
 	}
-
-	for _, l := range d.Raw() {
-		if l[2] == "=" && l[0] == l[1] {
-			fmt.Printf(" %s \n", l[0])
-			continue
-		}
-		if l[0] != "" {
-			fmt.Printf("\x1b[31m-%s\x1b[0m\n", l[0])
-		}
-		if l[1] != "" {
-			fmt.Printf("\x1b[32m+%s\x1b[0m\n", l[1])
-		}
-	}
+	fmt.Println(formatter.ColoredText(d))
 }

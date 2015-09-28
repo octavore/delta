@@ -8,7 +8,7 @@ import (
 	"unicode"
 )
 
-// Diff two strings and return a Differ with the solution
+// Diff two strings using dynamic programming and return a DiffSolution.
 func Diff(a, b string) *DiffSolution {
 	aw := strings.Split(a, "\n")
 	bw := strings.Split(b, "\n")
@@ -50,28 +50,28 @@ type Differ struct {
 	a        []string
 	b        []string
 	ab       [][]int32      // a x b score matrix
-	solution [][]lineSource // a x b results matrix
+	solution [][]LineSource // a x b results matrix
 
 	ignoreWhitespace bool
 	weights          Weights
 }
 
-type lineSource string
+type LineSource string
 
 const (
-	Unknown          lineSource = ""
-	LineFromA        lineSource = "<"
-	LineFromB        lineSource = ">"
-	LineFromBoth     lineSource = "="
-	LineFromBothEdit lineSource = "~"
+	Unknown          LineSource = ""
+	LineFromA        LineSource = "<"
+	LineFromB        LineSource = ">"
+	LineFromBoth     LineSource = "="
+	LineFromBothEdit LineSource = "~"
 )
 
 func NewDiffer(a, b []string) *Differ {
 	ab := make([][]int32, len(a))
-	solution := make([][]lineSource, len(a))
+	solution := make([][]LineSource, len(a))
 	for i := range ab {
 		ab[i] = make([]int32, len(b))
-		solution[i] = make([]lineSource, len(b))
+		solution[i] = make([]LineSource, len(b))
 	}
 	return &Differ{
 		a:        a,

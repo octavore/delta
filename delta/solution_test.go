@@ -7,7 +7,7 @@ import (
 
 func TestPostProcessAdd(t *testing.T) {
 	d := &DiffSolution{
-		lines: [][3]string{
+		Lines: [][3]string{
 			{"A", "A", string(LineFromBoth)},
 			{"", "B", string(LineFromB)},
 			{"", "C", string(LineFromB)},
@@ -20,7 +20,7 @@ func TestPostProcessAdd(t *testing.T) {
 	}
 
 	e := &DiffSolution{
-		lines: [][3]string{
+		Lines: [][3]string{
 			{"A", "A", string(LineFromBoth)},
 			{"B", "B", string(LineFromBoth)},
 			{"C", "C", string(LineFromBoth)},
@@ -39,7 +39,7 @@ func TestPostProcessAdd(t *testing.T) {
 
 func TestPostProcessDel(t *testing.T) {
 	d := &DiffSolution{
-		lines: [][3]string{
+		Lines: [][3]string{
 			{"A", "A", string(LineFromBoth)},
 			{"B", "", string(LineFromA)},
 			{"C", "", string(LineFromA)},
@@ -51,7 +51,7 @@ func TestPostProcessDel(t *testing.T) {
 	}
 
 	e := &DiffSolution{
-		lines: [][3]string{
+		Lines: [][3]string{
 			{"A", "A", string(LineFromBoth)},
 			{"B", "B", string(LineFromBoth)},
 			{"C", "C", string(LineFromBoth)},
