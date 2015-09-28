@@ -17,8 +17,8 @@ import (
 	"runtime/pprof"
 	"strings"
 
-	"github.com/octavore/delta/delta"
-	"github.com/octavore/delta/delta/formatter"
+	"github.com/octavore/delta"
+	"github.com/octavore/delta/formatter"
 )
 
 const VERSION = "0.1.0"
