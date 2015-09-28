@@ -1,5 +1,11 @@
 package main
 
+/*
+	delta is a command-line diff utility.
+	Usage:
+		`delta <file1> <file2>`
+*/
+
 import (
 	"flag"
 	"fmt"
@@ -15,16 +21,22 @@ import (
 	"github.com/octavore/delta/delta/formatter"
 )
 
+const VERSION = "0.1.0"
+
 func main() {
 	open := flag.Bool("open", false, "open the file in the gui")
 	html := flag.Bool("html", false, "print out html")
+	version := flag.Bool("version", false, "display delta version")
 	cpuprofile := flag.String("cpuprofile", "", "write cpu profile to file")
 	flag.Parse()
+	if *version {
+		fmt.Println("delta", VERSION)
+		return
+	}
 	if flag.NArg() < 2 {
 		flag.PrintDefaults()
 		return
 	}
-
 	if *cpuprofile != "" {
 		f, err := os.Create(*cpuprofile)
 		if err != nil {
@@ -75,6 +87,7 @@ func openDiff(pathBase, pathFrom, pathTo string) {
 	v.Add("base", pathBase)
 	v.Add("left", pathFrom)
 	v.Add("right", pathTo)
+	v.Add("v", VERSION)
 	v.Add("diff", f.Name())
 	u.RawQuery = v.Encode()
 	exec.Command("open", u.String()).Run()
