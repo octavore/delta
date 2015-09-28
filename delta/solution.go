@@ -62,7 +62,7 @@ func (d *DiffSolution) PostProcess() {
 		}
 
 		// we've reached the beginning of a region. Update pointers.
-		if lastLineType == LineFromBoth && currentLineType != lastLineType {
+		if lastLineType != currentLineType {
 			lastChangeStartIndex = i
 			lastChangeType = currentLineType
 		}

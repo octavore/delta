@@ -66,3 +66,29 @@ func TestPostProcessDel(t *testing.T) {
 		t.Errorf("expected:\n%+v\nbut got:\n%+v", e, d)
 	}
 }
+
+func TestPostProcessDel2(t *testing.T) {
+	d := &DiffSolution{
+		Lines: [][3]string{
+			{"A", "Q", string(LineFromBothEdit)},
+			{"B", "", string(LineFromA)},
+			{"C", "", string(LineFromA)},
+			{"B", "B", string(LineFromBoth)},
+			{"C", "C", string(LineFromBoth)},
+		},
+	}
+
+	e := &DiffSolution{
+		Lines: [][3]string{
+			{"A", "Q", string(LineFromBothEdit)},
+			{"B", "B", string(LineFromBoth)},
+			{"C", "C", string(LineFromBoth)},
+			{"B", "", string(LineFromA)},
+			{"C", "", string(LineFromA)},
+		},
+	}
+	d.PostProcess()
+	if !reflect.DeepEqual(d, e) {
+		t.Errorf("expected:\n%+v\nbut got:\n%+v", e, d)
+	}
+}
