@@ -32,12 +32,16 @@ type HistogramDiffer struct {
 	b []string
 }
 
+// DiffHistogram uses the histogram diff algorithm to generate
+// a line-based diff between two strings
 func DiffHistogram(a, b string) *DiffSolution {
 	aw := strings.Split(a, "\n")
 	bw := strings.Split(b, "\n")
 	return NewHistogramDiffer(aw, bw).Solve()
 }
 
+// NewHistogramDiffer returns a HistogramDiffer which diffs
+// the given sequence of words.
 func NewHistogramDiffer(a, b []string) *HistogramDiffer {
 	return &HistogramDiffer{a: a, b: b}
 }
