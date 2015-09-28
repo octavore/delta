@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"strings"
 
-	"bitbucket.org/pancakeio/delta/delta"
+	"github.com/octavore/delta/delta"
 )
 
 const (

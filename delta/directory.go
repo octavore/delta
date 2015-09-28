@@ -11,6 +11,7 @@ import (
 )
 
 func DiffFolder(pathA, pathB string) error {
+	panic("wip")
 	f, err := os.Open(pathA)
 	if err != nil {
 		return err

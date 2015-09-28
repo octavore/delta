@@ -155,7 +155,6 @@ func (h *HistogramDiffer) Solve() *DiffSolution {
 	s := &DiffSolution{}
 	prevRegion := &matchRegion{aStart: 0, aEnd: 0, bStart: 0, bEnd: 0}
 	regions := h.solveRange(0, len(h.a), 0, len(h.b))
-	// todo: preprocess regions
 	for _, region := range regions {
 		// compute intra-region differences
 		a := h.a[prevRegion.aEnd:region.aStart]

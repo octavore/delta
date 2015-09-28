@@ -11,8 +11,8 @@ import (
 	"runtime/pprof"
 	"strings"
 
-	"bitbucket.org/pancakeio/delta/delta"
-	"bitbucket.org/pancakeio/delta/delta/formatter"
+	"github.com/octavore/delta/delta"
+	"github.com/octavore/delta/delta/formatter"
 )
 
 func main() {
