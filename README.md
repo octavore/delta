@@ -1,6 +1,6 @@
 # Delta
 
-Delta is both a Go library and a command-line utility.
+Delta is both a Go library and a command-line utility for text diffs.
 
 ## Installation
 
