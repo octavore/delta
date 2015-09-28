@@ -87,7 +87,6 @@ func diff(pathFrom, pathTo string) (*delta.DiffSolution, error) {
 		return nil, fmt.Errorf("error reading %q: %v", pathTo, err)
 	}
 	return delta.DiffHistogram(string(from), string(to)), nil
-	// return delta.Diff(string(from), string(to)), nil
 }
 
 func printDiff(pathFrom, pathTo string, html bool) {
@@ -98,21 +97,19 @@ func printDiff(pathFrom, pathTo string, html bool) {
 	}
 	if html {
 		fmt.Println(d.HTML())
-	} else {
-		for _, l := range d.Raw() {
-			if l[2] == "=" && l[0] == l[1] {
-				// fmt.Printf("%d %s = %s \n", i, l[2], l[0])
-				fmt.Printf(" %s \n", l[0])
-				continue
-			}
-			if l[0] != "" {
-				// fmt.Printf("\x1b[31m%d %s < %s\x1b[0m\n", i, l[2], l[0])
-				fmt.Printf("\x1b[31m-%s\x1b[0m\n", l[0])
-			}
-			if l[1] != "" {
-				// fmt.Printf("\x1b[32m%d %s > %s\x1b[0m\n", i, l[2], l[1])
-				fmt.Printf("\x1b[32m+%s\x1b[0m\n", l[1])
-			}
+		return
+	}
+
+	for _, l := range d.Raw() {
+		if l[2] == "=" && l[0] == l[1] {
+			fmt.Printf(" %s \n", l[0])
+			continue
+		}
+		if l[0] != "" {
+			fmt.Printf("\x1b[31m-%s\x1b[0m\n", l[0])
+		}
+		if l[1] != "" {
+			fmt.Printf("\x1b[32m+%s\x1b[0m\n", l[1])
 		}
 	}
 }

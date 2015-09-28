@@ -36,6 +36,7 @@ func splitLine(s string) []string {
 	return ws
 }
 
+// DiffLine diffs on words
 func DiffLine(a, b string) *DiffSolution {
 	aw := splitLine(a)
 	bw := splitLine(b)
