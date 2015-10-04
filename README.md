@@ -12,7 +12,7 @@ If `$GOPATH/bin` is on your `$PATH`, run `delta -h` for usage.
 
 Delta implements two diff functions: Smith-Waterman, and histogram diff.
 
-[Smith-Waterman](https://en.wikipedia.org/wiki/Smith%E2%80%93Waterman_algorithm) 
+[Smith-Waterman](https://en.wikipedia.org/wiki/Smith%E2%80%93Waterman_algorithm)
 is a dynamic programming algorithm for aligning two sequences, in this case text
 sequences. It originates from bioinformatics, where it is used for aligning DNA sequences.
 
@@ -22,8 +22,10 @@ to `git`, where it can be used with the `git diff --histogram` command. This
 implementation post processes the histogram diff in order to push down match
 regions as far as possible. `git` also post processes diffs.
 
-## TODO
+## Configure git
 
-- add support for hiding unchanged parts of the diff.
-- make differ/histogram diff functions more consistent and add an interface. 
-- more comments for godoc/golint.
+The `delta` binary must be on your `$PATH` in order for this work. The following are helpers for adding `delta` to your `~/.gitconfig` file.
+
+    delta --install   # makes delta the default for `git difftool`
+    delta --uninstall # remove delta from your gitconfig
+
