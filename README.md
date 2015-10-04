@@ -1,6 +1,8 @@
 # Delta
 
-Delta is both a Go library and a command-line utility for text diffs.
+Delta is both a Go library and a command-line utility for text diffs. Diffs
+can be displayed in the command-line, or in the browser using the `--open`
+flag.
 
 ## Installation
 
@@ -22,13 +24,17 @@ to `git`, where it can be used with the `git diff --histogram` command. This
 implementation post processes the histogram diff in order to push down match
 regions as far as possible. `git` also post processes diffs.
 
-## Configure git
+## Configure Git
 
 The `delta` binary must be on your `$PATH` in order for this work. The
 following are helpers for adding `delta` to your `~/.gitconfig` file.
 
     delta --install   # makes delta the default for `git difftool`
     delta --uninstall # remove delta from your gitconfig
+
+## Browser Support
+
+![Screenshot](https://raw.github.com/octavore/delta/master/screenshot.jpg)
 
 ## Development
 
