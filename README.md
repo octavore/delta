@@ -24,8 +24,18 @@ regions as far as possible. `git` also post processes diffs.
 
 ## Configure git
 
-The `delta` binary must be on your `$PATH` in order for this work. The following are helpers for adding `delta` to your `~/.gitconfig` file.
+The `delta` binary must be on your `$PATH` in order for this work. The
+following are helpers for adding `delta` to your `~/.gitconfig` file.
 
     delta --install   # makes delta the default for `git difftool`
     delta --uninstall # remove delta from your gitconfig
+
+## Development
+
+You will need `npm` to install the necessary node packages for compiling the
+front-end assets.
+
+[go-bindata](https://github.com/jteeuwen/go-bindata) is used to generate the
+`bindata.go`, which allows us to embed static resources into the compiled
+binary.
 
