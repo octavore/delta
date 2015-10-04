@@ -1,0 +1,6 @@
+.idea
+*.iml
+node_modules
+delta/static/app.css
+delta/static/app.js
+delta/static/bindata.go

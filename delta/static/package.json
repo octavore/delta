@@ -1,0 +1,23 @@
+{
+  "dependencies": {},
+  "devDependencies": {
+    "babelify": "^6.3.0",
+    "bourbon": "^4.2.5",
+    "browserify": "^11.2.0",
+    "eslint": "^1.6.0",
+    "node-sass": "^3.3.3",
+    "uglifyify": "^3.0.1"
+  },
+  "eslintConfig": {
+    "env": {
+      "es6": true
+    },
+    "ecmaFeatures": {
+      "modules": true
+    },
+    "rules": {
+      "no-undef": 1,
+      "semi": 2
+    }
+  }
+}
