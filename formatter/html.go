@@ -78,8 +78,8 @@ func HTML(d *delta.DiffSolution) string {
 	}
 
 	li, ri := 0, 0
-	lg := bytes.NewBufferString("<div class='gutter'>\n")
-	rg := bytes.NewBufferString("<div class='gutter'>\n")
+	lg := bytes.NewBufferString("<div id='gutter-left' class='gutter'>\n")
+	rg := bytes.NewBufferString("<div id='gutter-right' class='gutter'>\n")
 	lb := bytes.NewBufferString("<div id='diff-left' class='diff-pane'><div class='diff-pane-contents'>\n")
 	rb := bytes.NewBufferString("<div id='diff-right' class='diff-pane'><div class='diff-pane-contents'>\n")
 	lastChangedLine = -maxContext
@@ -114,19 +114,19 @@ func HTML(d *delta.DiffSolution) string {
 		} else {
 			lastChangedLine = i
 		}
-		lc := "line-context-" + strconv.Itoa(closestChange) + " line "
+		lc := "lc-" + strconv.Itoa(closestChange) + " line "
 		if ls == delta.LineFromA {
 			li++
-			must(div.Execute(lg, elem{lc + "line-a line-addition", li}))
-			must(div.Execute(rg, elem{lc + "line-b", ""}))
-			must(div.Execute(lb, elem{lc + "line-a line-addition", l[0]}))
-			must(div.Execute(rb, elem{lc + "line-b", ""}))
+			must(div.Execute(lg, elem{lc + "la", li}))
+			must(div.Execute(rg, elem{lc, ""}))
+			must(div.Execute(lb, elem{lc + "la", l[0]}))
+			must(div.Execute(rb, elem{lc, ""}))
 		} else if ls == delta.LineFromB {
 			ri++
-			must(div.Execute(lg, elem{lc + "line-a", ""}))
-			must(div.Execute(rg, elem{lc + "line-b line-addition", ri}))
-			must(div.Execute(lb, elem{lc + "line-a", ""}))
-			must(div.Execute(rb, elem{lc + "line-b line-addition", l[1]}))
+			must(div.Execute(lg, elem{lc, ""}))
+			must(div.Execute(rg, elem{lc + "la", ri}))
+			must(div.Execute(lb, elem{lc, ""}))
+			must(div.Execute(rb, elem{lc + "la", l[1]}))
 		} else if ls == delta.LineFromBothEdit {
 			li++
 			ri++
@@ -138,24 +138,24 @@ func HTML(d *delta.DiffSolution) string {
 				dl = template.HTMLEscapeString(l[0])
 				dr = template.HTMLEscapeString(l[1])
 			}
-			must(div.Execute(lg, elem{lc + "line-a line-mismatch", li}))
-			must(div.Execute(rg, elem{lc + "line-b line-mismatch", ri}))
-			must(div.Execute(lb, elem{lc + "line-a line-mismatch", template.HTML(dl)}))
-			must(div.Execute(rb, elem{lc + "line-b line-mismatch", template.HTML(dr)}))
+			must(div.Execute(lg, elem{lc + "ln", li}))
+			must(div.Execute(rg, elem{lc + "ln", ri}))
+			must(div.Execute(lb, elem{lc + "ln", template.HTML(dl)}))
+			must(div.Execute(rb, elem{lc + "ln", template.HTML(dr)}))
 		} else if l[0] != l[1] {
 			li++
 			ri++
-			must(div.Execute(lg, elem{lc + "line-a line-ws", li}))
-			must(div.Execute(rg, elem{lc + "line-b line-ws", ri}))
-			must(div.Execute(lb, elem{lc + "line-a line-ws", l[0]}))
-			must(div.Execute(rb, elem{lc + "line-b line-ws", l[1]}))
+			must(div.Execute(lg, elem{lc + "line-ws", li}))
+			must(div.Execute(rg, elem{lc + "line-ws", ri}))
+			must(div.Execute(lb, elem{lc + "line-ws", l[0]}))
+			must(div.Execute(rb, elem{lc + "line-ws", l[1]}))
 		} else if ls == delta.LineFromBoth {
 			li++
 			ri++
-			must(div.Execute(lg, elem{lc + "line-a line-match", li}))
-			must(div.Execute(rg, elem{lc + "line-b line-match", ri}))
-			must(div.Execute(lb, elem{lc + "line-a line-match", l[0]}))
-			must(div.Execute(rb, elem{lc + "line-b line-match", l[1]}))
+			must(div.Execute(lg, elem{lc + "lm", li}))
+			must(div.Execute(rg, elem{lc + "lm", ri}))
+			must(div.Execute(lb, elem{lc + "lm", l[0]}))
+			must(div.Execute(rb, elem{lc + "lm", l[1]}))
 		}
 	}
 

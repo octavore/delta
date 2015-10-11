@@ -68,6 +68,10 @@ html
             height: 100%
             position: fixed
             width: 180px
+            .sidebar-subheader
+                padding: 6px 12px 3px
+                font-size: 12px
+                color: rgba(255,255,255,0.2)
             .sidebar-entry
                 @include user-select(none)
                 cursor: pointer
@@ -94,69 +98,6 @@ html
         &.sidebar-show-false
             box-shadow: none
             margin-left: -180px
-
-    #file-drop-overlay
-        position: absolute
-        top: 0
-        left: 0
-        right: 0
-        bottom: 50px
-        z-index: 2
-
-    #file-drop
-        @include user-select(none)
-        @include flex(1 0 auto)
-        // background: linear-gradient(315deg, #16222A, #3A6073)
-        background: #16222A
-        font-family: "Helvetica Neue"
-        color: white
-        padding: 0
-        -webkit-app-region: drag
-        text-align: center
-        .file-drop-circle
-            transition: all 0.1s ease-out
-            // background: rgba(255,255,255,0.2)
-            border: 4px dashed rgba(255,255,255,0.2)
-            border-radius: 200px
-            margin: 20px auto 0
-            width: 220px
-            height: 220px
-            display: flex
-            flex-direction: column
-            justify-content: center
-            .header
-                position: absolute
-                top: 100px
-                margin: 0 auto
-                width: 220px
-                font-size: 26px
-                text-align: center
-
-        .file-drop-file
-            padding: 15px
-            box-shadow: 0 1px 2px rgba(0,0,0,0.5)
-
-        &.file-drop-hover
-            .file-drop-circle
-                margin-top: 0
-                border-radius: 0
-                width: 100%
-                background: rgba(255,255,255,0.1)
-                height: 320px
-                border: none
-
-        .footer-button
-            -webkit-app-region: no-drag
-            background: #1E323E
-            cursor: pointer
-            color: white
-            width: 100%
-            position: absolute
-            bottom: 0
-            left: 0
-            padding: 15px 0
-            @extend .ui-shadow
-            @extend .ui-shadow-hover
 
     .button
         @include user-select(none)
@@ -205,7 +146,6 @@ html
                     + .diff-pane
                         border-left: 1px solid #444
                     background: #1E323E
-                    z-index: 2
                     @extend .ui-shadow
                     padding: 12px 10px
                     font-size: 13px
@@ -221,55 +161,45 @@ html
                 border-left: 1px solid #ccc
                 min-width: 30px
                 color: rgba(0,0,0,0.4)
+                z-index: 2
                 &:first-child
                     border-left: none
                 .line
-                    &.line-ws, &.line-mismatch
+                    &.line-ws, &.ln
                         background-color: tint($diffChangeColor, 20%)
                         border-left: 1px solid shade($diffChangeColor, 10%)
                         border-right: 1px solid shade($diffChangeColor, 10%)
                         margin-left: -1px
                         margin-right: -1px
-                    &.line-a.line-addition
-                        background-color: lighten($red1, 5%)
-                        border-left: 1px solid darken($red1, 10%)
-                        margin-left: -1px
-                        margin-right: -1px
-                        border-right: 1px solid darken($red1, 10%)
-                    &.line-b.line-addition
-                        background-color: $green1
-                        border-left: 1px solid $green2
-                        margin-left: -1px
-                        margin-right: -1px
-                        border-right: 1px solid $green2
+
             .line
                 height: 16px
                 line-height: 16px
                 padding: 0px 5px
                 &:last-child
                     border-bottom: 1px solid #ddd
-                &.line-ws, &.line-mismatch, &.line-addition, &.line-match
+                &.line-ws, &.ln, &.la, &.lm
                     background: white
 
             &.diff-empty-false
                 .line
                     display: none
-                    &.line-ws, &.line-mismatch, &.line-addition, &.line-match
+                    &.line-ws, &.ln, &.la, &.lm
                         display: block
             &.diff-context-true
                 .diff-pane, .gutter
-                    .line-context-10
+                    .lc-10
                         height: 0px
                         margin: 10px 0
                         overflow: hidden
                         box-shadow: 0 0 8px 1px rgba(0,0,0,0.8)
                         opacity: 0.3
                         display: block
-                    .line-context-9 + .line-context-10
+                    .lc-9 + .lc-10
                         display: block !important
-                    .line-context-10 ~ .line-context-10
+                    .lc-10 ~ .lc-10
                         display: none
-                    .line-context--1
+                    .lc--1
                         display: none
             // This section contains css voodoo. basically, we want to
             // make sure that we display only one divider when hiding code,
@@ -278,29 +208,28 @@ html
             // where we only want one divider between each set of pipes, and
             // also at the beginning and end.
             // Therefore we take the following approach:
-            // 1. show all of line-context-i
-            // 2. hide all of line-context-i that is not the first
-            // 3. force display line-context-i that follows line-context-(i-1)
+            // 1. show all of lc-i
+            // 2. hide all of lc-i that is not the first
+            // 3. force display lc-i that follows lc-(i-1)
             @for $i from 1 through 10
                 &.diff-context-#{$i}
                     .diff-pane, .gutter
-                        .line-context-#{$i}
+                        .lc-#{$i}
                             height: 0px
                             margin: 10px 0
                             overflow: hidden
                             box-shadow: 0 0 8px 1px rgba(0,0,0,0.8)
                             opacity: 0.3
                             display: block
-                        .line-context-#{$i - 1} + .line-context-#{$i}
+                        .lc-#{$i - 1} + .lc-#{$i}
                             display: block !important
-                        .line-context-#{$i} ~ .line-context-#{$i}
+                        .lc-#{$i} ~ .lc-#{$i}
                             display: none
-                        .line-context--1
+                        .lc--1
                             display: none
                         @for $j from $i+1 to 11
-                            .line-context-#{$j}
+                            .lc-#{$j}
                                 display: none
-
 
             .diff-pane
                 @include flex(1 1 50%)
@@ -333,19 +262,31 @@ html
                             border-color: darken($red1, 20%)
                     .w-edit
                         background: darken($diffChangeColor, 20%)
-                .line-match
+                .lm
                     opacity: 0.4
                     background: white
                 .line-ws
                     background-color: tint($diffChangeColor, 50%)
-                .line-mismatch
+                .ln
                     background-color: $diffChangeColor
-                .line-a.line-addition
-                    background-color: $red1
-                .line-b.line-addition
-                    background-color: $green0
-                .line-ws, .line-mismatch, .line-addition
+                .line-ws, .ln, .la
                     .delta-tab:before
                       content: "\25b8"
                       color: #ddd
                       padding-left: 11px
+            #diff-left .la
+                background-color: $red1
+            #diff-right .la
+                background-color: $green0
+            #gutter-left .la
+                background-color: lighten($red1, 5%)
+                border-left: 1px solid darken($red1, 10%)
+                margin-left: -1px
+                margin-right: -1px
+                border-right: 1px solid darken($red1, 10%)
+            #gutter-right .la
+                background-color: $green1
+                border-left: 1px solid $green2
+                margin-left: -1px
+                margin-right: -1px
+                border-right: 1px solid $green2

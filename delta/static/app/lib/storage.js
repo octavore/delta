@@ -1,69 +1,60 @@
 /*eslint-env browser*/
+/*global PouchDB:false */
 
-/*
+const filesetExpiration = 5*60000; // filesets expire in 5 minutes.
+const filesetGroupingWindow = 5000;
+const pouch = new PouchDB("delta");
 
-data is stored as follows:
-
-    localStorage[deltaKey] = {
-      "metadata.dir": {
-        "_time": new Date() * 1;
-        "metadata.merged": {}
-      }
-    }
-
-*/
-
-const deltaKey = "delta";
-
-function getGlobalStore() {
-  let globalStore = localStorage.getItem(deltaKey);
-  if (typeof globalStore == "string") {
-    globalStore = JSON.parse(globalStore);
-  }
-  if (globalStore == null || typeof globalStore != "object") {
-    globalStore = {};
-    localStorage.setItem(deltaKey, JSON.stringify(globalStore));
-  }
-  return globalStore;
-
+export function hasMore(dirhash, ts) {
+  let start = `dm-${dirhash}-${ts}`;
+  let end = `dm-${dirhash}-${ts+filesetGroupingWindow+1}-`;
+  return pouch.allDocs({
+    startkey: start,
+    endkey: end,
+  }).then((result) => {
+    return result.rows.length > 1;
+  }).catch((err) => {
+    console.log("hasMore error:");
+    console.log(err);
+  });
 }
 
-function getStore(workingDir) {
-  let globalStore = getGlobalStore();
-  if (!(workingDir in globalStore)) {
-    localStorage.setItem(deltaKey, JSON.stringify(globalStore));
-  }
-  return globalStore[workingDir];
-}
-
-function updateStore(workingDir, filePath, fileMetadata) {
-  let now = new Date();
-  let globalStore = getGlobalStore();
-  if (!(workingDir in globalStore) || (now - globalStore[workingDir]["_created_at"]) > 1000) {
-    globalStore[workingDir] = {"_created_at": now*1};
-  }
-  globalStore[workingDir][filePath] = fileMetadata;
-  localStorage.setItem(deltaKey, JSON.stringify(globalStore));
-}
-
-export function size(dir) {
-  return Object.keys(getGlobalStore()[dir]).length;
-}
-
-export function collect(dir, callback) {
-  let out = [];
-  let storage = getStore(dir);
-  for (var key in storage) {
-    if (key == "_created_at") {
-      continue;
-    }
-    out.push(callback(key, storage[key]));
-  }
-  return out;
+export function collect(dirhash, ts, callback) {
+  let start = `dm-${dirhash}-${ts-filesetGroupingWindow}`;
+  let end = `dm-${dirhash}-${ts+filesetGroupingWindow+1}-`;
+  return pouch.allDocs({
+    startkey: start,
+    endkey: end,
+    include_docs: true
+  }).then((result) => {
+    return result.rows.map((r) => callback(r.doc));
+  }).catch((err) => {
+    console.log("collect error:");
+    console.log(err);
+  });
 }
 
 // storage: keyed on working dir plus date
-export function addFile(metadata) {
-  // todo: catch errors
-  updateStore(metadata.dir, metadata.merged, metadata);
+// addFile is async because saving metadata may
+// require retries.
+export function addFile(metadata, file) {
+  metadata._id = `dm-${metadata.dirhash}-${metadata.timestamp}-${metadata.hash}`;
+  metadata.fileKey = metadata._id.replace("dm-", "df-");
+  return pouch.put(metadata).then((response) => {
+    return pouch.put({
+      _id: metadata.fileKey,
+      diff: file,
+    });
+  }).catch((err) => {
+    console.log("addFile error:");
+    console.log(err);
+  });
+}
+
+// getFile returns a Promise
+export function getFile(metadata) {
+  return pouch.get(metadata.fileKey).catch((err) => {
+    console.log("getFile error:");
+    console.log(err);
+  });
 }

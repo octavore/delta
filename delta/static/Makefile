@@ -4,6 +4,8 @@ gobin := $(GOPATH)/bin
 
 all: clean sass js bindata.go
 
+debug: clean sass jsdebug bindata.go
+
 sass:
 	@$(npmbin)/node-sass --output-style compressed styles/app.sass app.css
 
@@ -18,6 +20,13 @@ js:
 	  -g uglifyify \
 	  --outfile app.js
 	@echo "Wrote app.js"
+
+jsdebug:
+	@$(npmbin)/browserify app/app.js \
+	  -t babelify \
+	  --debug \
+	  --outfile app.js
+	@echo "Wrote app.js with map"
 
 bindata.go:
 	@$(gobin)/go-bindata \

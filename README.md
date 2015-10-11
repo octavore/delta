@@ -45,3 +45,15 @@ front-end assets.
 `bindata.go`, which allows us to embed static resources into the compiled
 binary.
 
+## TODO
+
+- add support for hiding unchanged parts of the diff.
+- make differ/histogram diff functions more consistent and add an interface.
+- more comments for godoc/golint.
+- upload gist to rawgit
+- fix race condition in update
+- favicon
+- add folder names in sidebar
+- make sidebar resizable
+- add ability to modify hidden context
+

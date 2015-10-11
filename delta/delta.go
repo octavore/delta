@@ -8,6 +8,8 @@ package main
 
 import (
 	"bytes"
+	"crypto/md5"
+	"encoding/hex"
 	"encoding/json"
 	"flag"
 	"fmt"
@@ -17,6 +19,7 @@ import (
 	"os/exec"
 	"runtime/pprof"
 	"strings"
+	"time"
 
 	"github.com/octavore/delta"
 	"github.com/octavore/delta/delta/static"
@@ -110,24 +113,29 @@ func openDiff(pathFrom, pathTo, pathBase string) {
 	}
 
 	wd, _ := os.Getwd()
-
+	html := formatter.HTML(d)
 	m := &Metadata{
-		From:   pathFrom,
-		To:     pathTo,
-		Merged: pathBase,
-		Dir:    wd,
-		Change: change,
+		From:      pathFrom,
+		To:        pathTo,
+		Merged:    pathBase,
+		Dir:       wd,
+		Change:    change,
+		Hash:      md5sum(html),
+		DirHash:   md5sum(wd),
+		Timestamp: time.Now().UnixNano() / 1000000, // convert to millis
 	}
 	meta, _ := json.Marshal(m)
 	tmpl := template.Must(template.New("compare").Parse(getAsset("compare.html")))
 	buf := &bytes.Buffer{}
 	err = tmpl.Execute(buf, map[string]interface{}{
 		"metadata": template.JS(string(meta)),
-		"content":  template.HTML(formatter.HTML(d)),
+		"content":  template.HTML(html),
 		"CSS":      template.CSS(getAsset("app.css")),
 		"JS": map[string]interface{}{
 			"mithril":   template.JS(getAsset("vendor/mithril.min.js")),
+			"mousetrap": template.JS(getAsset("vendor/mousetrap.min.js")),
 			"highlight": template.JS(getAsset("vendor/highlight.js")),
+			"pouchdb":   template.JS(getAsset("vendor/pouchdb.min.js")),
 			"app":       template.JS(getAsset("app.js")),
 		},
 	})
@@ -192,4 +200,10 @@ func uninstallGit() {
 		o, _ := exec.Command(c[0], c[1:]...).CombinedOutput()
 		fmt.Print(string(o))
 	}
+}
+
+func md5sum(s string) string {
+	hash := md5.New()
+	_, _ = hash.Write([]byte(s))
+	return hex.EncodeToString(hash.Sum(nil))
 }
