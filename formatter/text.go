@@ -9,7 +9,7 @@ import (
 
 func ColoredText(d *delta.DiffSolution) string {
 	buf := &bytes.Buffer{}
-	for _, l := range d.Raw() {
+	for _, l := range d.Lines {
 		if l[2] == "=" && l[0] == l[1] {
 			fmt.Fprintf(buf, " %s \n", l[0])
 			continue

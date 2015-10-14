@@ -1,5 +1,17 @@
 package delta
 
+// LineSource indicates the origin of the solution line.
+type LineSource string
+
+// These are valid values for LineSource.
+const (
+	Unknown          LineSource = ""
+	LineFromA        LineSource = "<"
+	LineFromB        LineSource = ">"
+	LineFromBoth     LineSource = "="
+	LineFromBothEdit LineSource = "~"
+)
+
 // DiffSolution contains a set of lines, where each element of
 // lines comprises the left and right line, and whether the change
 // was from A or B.
@@ -21,10 +33,6 @@ func (d *DiffSolution) addLine(a, b string, l LineSource) {
 
 func (d *DiffSolution) addSolution(e *DiffSolution) {
 	d.Lines = append(d.Lines, e.Lines...)
-}
-
-func (d *DiffSolution) Raw() [][3]string {
-	return d.Lines
 }
 
 // PostProcess loops over the solution. For each changed region, see if we can
@@ -53,8 +61,8 @@ func (d *DiffSolution) PostProcess() {
 				(lastChangeType == LineFromB && d.Lines[p1][1] == d.Lines[p2][1])) &&
 				LineSource(d.Lines[p2][2]) == LineFromBoth {
 				d.Lines[p1], d.Lines[p2] = d.Lines[p2], d.Lines[p1]
-				p1 += 1
-				p2 += 1
+				p1++
+				p2++
 				if p2 >= len(d.Lines) {
 					break
 				}

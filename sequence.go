@@ -8,11 +8,11 @@ import (
 	"unicode"
 )
 
-// Diff two strings using dynamic programming and return a DiffSolution.
-func Diff(a, b string) *DiffSolution {
+// SequenceDiff two strings using dynamic programming and return a DiffSolution.
+func SequenceDiff(a, b string) *DiffSolution {
 	aw := strings.Split(a, "\n")
 	bw := strings.Split(b, "\n")
-	d := NewDiffer(aw, bw)
+	d := NewSequenceDiffer(aw, bw)
 	d.ignoreWhitespace = true
 	return d.Solve()
 }
@@ -43,37 +43,29 @@ func DiffLine(a, b string) *DiffSolution {
 	if len(aw)*len(bw) > 100000000 {
 		return nil
 	}
-	return NewDiffer(aw, bw).Solve()
+	return NewSequenceDiffer(aw, bw).Solve()
 }
 
-type Differ struct {
+// SequenceDiffer computes a diff using a dynamic programming algorithm.
+type SequenceDiffer struct {
 	a        []string
 	b        []string
 	ab       [][]int32      // a x b score matrix
 	solution [][]LineSource // a x b results matrix
 
 	ignoreWhitespace bool
-	weights          Weights
+	weights weights
 }
 
-type LineSource string
-
-const (
-	Unknown          LineSource = ""
-	LineFromA        LineSource = "<"
-	LineFromB        LineSource = ">"
-	LineFromBoth     LineSource = "="
-	LineFromBothEdit LineSource = "~"
-)
-
-func NewDiffer(a, b []string) *Differ {
+// NewSequenceDiffer returns a new SequenceDiffer to compare two lists of strings.
+func NewSequenceDiffer(a, b []string) *SequenceDiffer {
 	ab := make([][]int32, len(a))
 	solution := make([][]LineSource, len(a))
 	for i := range ab {
 		ab[i] = make([]int32, len(b))
 		solution[i] = make([]LineSource, len(b))
 	}
-	return &Differ{
+	return &SequenceDiffer{
 		a:        a,
 		b:        b,
 		ab:       ab,
@@ -82,29 +74,30 @@ func NewDiffer(a, b []string) *Differ {
 	}
 }
 
-// scores for the algorithm
-type Weights struct {
+// weights for the algorithm
+type weights struct {
 	Deletion int32
 	Match    int32
 	Mismatch int32
 	NewMode  int32
 }
 
-var defaultWeights = Weights{
+var defaultWeights = weights{
 	Deletion: -2,
 	Match:    100, // we _really_ like matches
 	Mismatch: -1,
 	NewMode:  0,
 }
 
-func (d *Differ) isLineEqual(a, b string) bool {
+func (d *SequenceDiffer) isLineEqual(a, b string) bool {
 	if d.ignoreWhitespace {
 		return strings.TrimSpace(a) == strings.TrimSpace(b)
 	}
 	return a == b
 }
 
-func (d *Differ) Solve() *DiffSolution {
+// Solve the diff using dyanmic programming.
+func (d *SequenceDiffer) Solve() *DiffSolution {
 	s := &DiffSolution{}
 	m := modeBeginning
 
@@ -154,7 +147,7 @@ const (
 
 // computeOptimal computes the optimal (maximum) score, which
 // corresponds to the best diff
-func (d *Differ) computeOptimal(ai, bi int, m blockMode) int32 {
+func (d *SequenceDiffer) computeOptimal(ai, bi int, m blockMode) int32 {
 	// base case: no more lines to align
 	if ai > len(d.a)-1 || bi > len(d.b)-1 {
 		return 0
@@ -222,7 +215,7 @@ func (d *Differ) computeOptimal(ai, bi int, m blockMode) int32 {
 	return d.ab[ai][bi]
 }
 
-func (d *Differ) debug() string {
+func (d *SequenceDiffer) debug() string {
 	o := ""
 	for _, l := range d.ab {
 		for _, score := range l {
@@ -233,8 +226,8 @@ func (d *Differ) debug() string {
 	return o
 }
 
-// this needs a second pass which minimizes number of change blocks
-func (d *Differ) getSolution(s *DiffSolution, a, b int) {
+// todo: second pass which minimizes number of change blocks?
+func (d *SequenceDiffer) getSolution(s *DiffSolution, a, b int) {
 	// iterate until no more string
 	for a < len(d.a) || b < len(d.b) {
 		// no more a

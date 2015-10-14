@@ -4,6 +4,14 @@ import (
 	"strings"
 )
 
+// HistogramDiff uses the histogram diff algorithm to generate
+// a line-based diff between two strings
+func HistogramDiff(a, b string) *DiffSolution {
+	aw := strings.Split(a, "\n")
+	bw := strings.Split(b, "\n")
+	return NewHistogramDiffer(aw, bw).Solve()
+}
+
 // matchRegion delineates a region of A and B which are equal.
 // start is inclusive but end is exclusive
 type matchRegion struct {
@@ -27,21 +35,13 @@ func (m *matchRegion) length() int {
 	return m.aEnd - m.aStart
 }
 
+// HistogramDiffer implements the histogram diff algorithm.
 type HistogramDiffer struct {
 	a []string
 	b []string
 }
 
-// DiffHistogram uses the histogram diff algorithm to generate
-// a line-based diff between two strings
-func DiffHistogram(a, b string) *DiffSolution {
-	aw := strings.Split(a, "\n")
-	bw := strings.Split(b, "\n")
-	return NewHistogramDiffer(aw, bw).Solve()
-}
-
-// NewHistogramDiffer returns a HistogramDiffer which diffs
-// the given sequence of words.
+// NewHistogramDiffer returns a HistogramDiffer which diffs the given sequence of words.
 func NewHistogramDiffer(a, b []string) *HistogramDiffer {
 	return &HistogramDiffer{a: a, b: b}
 }
@@ -98,8 +98,8 @@ func (h *HistogramDiffer) longestSubstring(aStart, aEnd, bStart, bEnd int) *matc
 
 			// expand beginning of match region
 			for r.validStart(aStart, bStart) && h.eq(r.aStart-1, r.bStart-1) {
-				r.aStart -= 1
-				r.bStart -= 1
+				r.aStart--
+				r.bStart--
 				if r.matchScore > 1 {
 					trimmedAStart := strings.TrimSpace(h.a[r.aStart])
 					r.matchScore = min(r.matchScore, len(histogram[trimmedAStart]))
@@ -112,8 +112,8 @@ func (h *HistogramDiffer) longestSubstring(aStart, aEnd, bStart, bEnd int) *matc
 					trimmedAEnd := strings.TrimSpace(h.a[r.aEnd])
 					r.matchScore = min(r.matchScore, len(histogram[trimmedAEnd]))
 				}
-				r.aEnd += 1
-				r.bEnd += 1
+				r.aEnd++
+				r.bEnd++
 			}
 
 			// see if we have a good match
@@ -163,7 +163,7 @@ func (h *HistogramDiffer) Solve() *DiffSolution {
 		// compute intra-region differences
 		a := h.a[prevRegion.aEnd:region.aStart]
 		b := h.b[prevRegion.bEnd:region.bStart]
-		s.addSolution(NewDiffer(a, b).Solve())
+		s.addSolution(NewSequenceDiffer(a, b).Solve())
 
 		// copy match region
 		for _, l := range h.a[region.aStart:region.aEnd] {
@@ -177,7 +177,7 @@ func (h *HistogramDiffer) Solve() *DiffSolution {
 	// compute diff for final unmatched section
 	a := h.a[prevRegion.aEnd:len(h.a)]
 	b := h.b[prevRegion.bEnd:len(h.b)]
-	s.addSolution(NewDiffer(a, b).Solve())
+	s.addSolution(NewSequenceDiffer(a, b).Solve())
 	s.PostProcess()
 	return s
 }

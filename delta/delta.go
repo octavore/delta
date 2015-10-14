@@ -2,8 +2,13 @@ package main
 
 /*
 	delta is a command-line diff utility.
+
 	Usage:
-		`delta <file1> <file2>`
+		`delta <file1> <file2> <merged>`
+
+		file1 is set to the name of the temporary file containing the contents of the diff pre-image.
+		file2 is set to the name of the temporary file containing the contents of the diff post-image.
+		merged is the name of the file which is being compared.
 */
 
 import (
@@ -27,12 +32,8 @@ import (
 	"github.com/octavore/delta/formatter"
 )
 
-const VERSION = "0.2.0"
+const VERSION = "0.3.0"
 
-// invoke with `delta LOCAL REMOTE MERGED`
-// LOCAL is set to the name of the temporary file containing the contents of the diff pre-image
-// REMOTE is set to the name of the temporary file containing the contents of the diff post-image
-// MERGED is the name of the file which is being compared.
 func main() {
 	// only one of the following should be provided
 	open := flag.Bool("open", false, "open the file in the gui")
@@ -156,7 +157,7 @@ func diff(pathFrom, pathTo string) (*delta.DiffSolution, error) {
 	if err != nil {
 		return nil, fmt.Errorf("error reading %q: %v", pathTo, err)
 	}
-	return delta.DiffHistogram(string(from), string(to)), nil
+	return delta.HistogramDiff(string(from), string(to)), nil
 }
 
 func printDiff(pathFrom, pathTo string, html bool) {
