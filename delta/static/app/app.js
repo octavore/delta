@@ -90,19 +90,6 @@ class AppController {
   }
 }
 
-// sidebarEntry creates the div for each sidebar entry.
-// @param {CompareController} ctrl
-// @param {FilePair} el
-function sidebarEntry(ctrl, el) {
-  let k = `.sidebar-entry-${el.change}`;
-  if (el.merged === ctrl.currentFile().merged) {
-    k += ".sidebar-entry-selected";
-  }
-  return m(".sidebar-entry" + k, {
-    onclick: () => ctrl.setCurrentFile(el)
-  }, path.basename(el.merged));
-}
-
 function sidebar(dir, ctrl) {
   let groups = ctrl.fileList();
   return Object.keys(groups).sort().map((group) => {
@@ -111,7 +98,13 @@ function sidebar(dir, ctrl) {
       h = m(".sidebar-subheader", "<root>");
     }
     return m("div", h, groups[group].map((meta) => {
-      return sidebarEntry(ctrl, meta);
+      let k = `.sidebar-entry-${meta.change}`;
+      if (meta.merged === ctrl.currentFile().merged) {
+        k += ".sidebar-entry-selected";
+      }
+      return m(".sidebar-entry" + k, {
+        onclick: () => ctrl.setCurrentFile(meta)
+      }, path.basename(meta.merged));
     }));
   });
 }
