@@ -13,7 +13,8 @@ class AppController {
       this.setCurrentFile(metadata);
     });
 
-    this.fileList = m.prop({});
+    this.fileGroups = m.prop([]);
+    this.fileList = m.prop([]);
     this.showMenu = m.prop(true);
     this.showContext = m.prop(true);
     this.showEmpty = m.prop(true);
@@ -63,8 +64,8 @@ class AppController {
       this.showMenu(!this.showMenu());
       m.redraw();
     });
-    Mousetrap.bind("j", this.nextFile);
-    Mousetrap.bind("k", this.prevFile);
+    Mousetrap.bind("j", this.nextFile.bind(this));
+    Mousetrap.bind("k", this.prevFile.bind(this));
   }
 
   setCurrentFile(metadata) {
@@ -79,25 +80,53 @@ class AppController {
 
   updateSidebar() {
     let groups = {};
+    this.fileList([]);
     storage.collect(metadata.dirhash, metadata.timestamp, (meta) => {
       let dir = path.dirname(meta.merged);
       groups[dir] = groups[dir] || [];
       groups[dir].push(meta);
     }).then(() => {
-      this.fileList(groups);
+      let sortedGroups = Object.keys(groups).sort();
+      this.fileGroups(sortedGroups.map((group) => {
+        this.fileList(this.fileList().concat(groups[group]));
+        return {dir: group, files: groups[group]};
+      }));
       m.redraw();
+    });
+  }
+
+  nextFile() {
+    let id = this.currentFile()._id;
+    this.fileList().map((meta, i, lst) => {
+      if (meta._id != id) {
+        return;
+      }
+      if (lst.length > i+1) {
+        this.setCurrentFile(lst[i+1]);
+      }
+    });
+  }
+
+  prevFile() {
+    let id = this.currentFile()._id;
+    this.fileList().map((meta, i, lst) => {
+      if (meta._id != id) {
+        return;
+      }
+      if (i > 0) {
+        this.setCurrentFile(lst[i-1]);
+      }
     });
   }
 }
 
 function sidebar(dir, ctrl) {
-  let groups = ctrl.fileList();
-  return Object.keys(groups).sort().map((group) => {
-    let h = m(".sidebar-subheader", group);
-    if (group == ".") {
+  return ctrl.fileGroups().map((group) => {
+    let h = m(".sidebar-subheader", group.dir);
+    if (group.dir == ".") {
       h = m(".sidebar-subheader", "<root>");
     }
-    return m("div", h, groups[group].map((meta) => {
+    return m("div", h, group.files.map((meta) => {
       let k = `.sidebar-entry-${meta.change}`;
       if (meta.merged === ctrl.currentFile().merged) {
         k += ".sidebar-entry-selected";
