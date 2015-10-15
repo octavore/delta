@@ -36,6 +36,18 @@ following are helpers for adding `delta` to your `~/.gitconfig` file.
 
 ![Screenshot](https://raw.github.com/octavore/delta/master/screenshot.jpg)
 
+Delta works best in Chrome and Safari. You will see a separate tab open for
+each diff file, and then the tabs will consolidate into a single tab. In
+Firefox, each diff will remain in separate tabs. This is because in Firefox,
+each file receives its own IndexedDB instance, instead of a shared instance.
+
+Browser support relies on the following open source libraries:
+
+- [Mithril](http://mithril.js.org/)
+- [highlight.js](https://highlightjs.org/)
+- [Mousetrap](https://craig.is/killing/mice)
+- [PouchDB](http://pouchdb.com/)
+
 ## Development
 
 You will need `npm` to install the necessary node packages for compiling the
