@@ -9,8 +9,10 @@ class AppController {
   constructor() {
     this.currentFile = m.prop(metadata);
     this.currentDiff = m.prop(document.querySelector("#diff").innerHTML);
+    this.fileSaved = false;
     storage.addFile(metadata, this.currentDiff()).then(() => {
       this.setCurrentFile(metadata);
+      this.fileSaved = true;
     });
 
     this.fileGroups = m.prop([]);
@@ -26,19 +28,24 @@ class AppController {
     // todo: move this to the storage via the ability to register callbacks?
     this.maxDelayMillis = 2000;
     this.start = new Date();
-    this.poll = setInterval(this._poll.bind(this), 20);
+    this.poll = setInterval(this._poll.bind(this), 10);
 
     this._initKeyBindings();
   }
 
   _poll() {
+    // if the file has not been saved, continue
+    if (!this.fileSaved) {
+      return;
+    }
+
     this.updateSidebar();
     let now = new Date();
+
     // if there is no change to the change list for this dir within
     // maxDelayMillis, then clear the poll.
     if ((now - this.start) > this.maxDelayMillis) {
       clearInterval(this.poll);
-      return;
     }
 
     // another tab opened a diff for the same dir (within maxDelayMillis)
