@@ -1,7 +1,7 @@
 /*eslint-env browser*/
 /*global PouchDB:false */
 
-const filesetExpiration = 5*60000; // filesets expire in 5 minutes.
+const filesetExpiration = 10*60*1000; // filesets expire in 10 minutes.
 const filesetGroupingWindow = 5000;
 const pouch = new PouchDB("delta");
 
@@ -58,3 +58,29 @@ export function getFile(metadata) {
     console.log(err);
   });
 }
+
+// purge old documents on window unload.
+window.addEventListener("load", () => {
+  let d = new Date() * 1 - filesetExpiration;
+  pouch.allDocs({
+    startkey: "dm-",
+    endkey: "dm-\uffff"
+  }).then((result) => {
+    result.rows.map((r) => {
+      if (r.id.split("-")[2]*1 < d) {
+        pouch.remove(r.id, r.value.rev);
+      }
+    });
+  });
+
+  pouch.allDocs({
+    startkey: "df-",
+    endkey: "df-\uffff"
+  }).then((result) => {
+    result.rows.map((r) => {
+      if (r.id.split("-")[2]*1 < d) {
+        pouch.remove(r.id, r.value.rev);
+      }
+    });
+  });
+});
