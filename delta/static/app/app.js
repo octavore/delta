@@ -32,6 +32,7 @@ class AppController {
   }
 
   _poll() {
+    this.updateSidebar();
     let now = new Date();
     // if there is no change to the change list for this dir within
     // maxDelayMillis, then clear the poll.
@@ -49,14 +50,14 @@ class AppController {
   }
 
   _initKeyBindings() {
-    for (var i = 0; i < 5; i++) {
+    for (var i = 0; i < 6; i++) {
       let j = i;
       Mousetrap.bind(`${i}`, () => {
         this.showContext(j);
         m.redraw();
       });
     };
-    Mousetrap.bind("10", () => {
+    Mousetrap.bind("6", () => {
       this.showContext(10);
       m.redraw();
     });
