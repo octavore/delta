@@ -4,6 +4,8 @@
 @import url(https://fonts.googleapis.com/css?family=Source+Sans+Pro)
 
 $red1: #FFE1E2
+$red2: darken($red1, 10%)
+$red4: darken($red1, 30%)
 $green0: #ECFFE8
 $green1: #DBF1D7
 $green2: darken($green1, 10%)
@@ -89,7 +91,7 @@ html
                     position: absolute
                     left: 7px
                     content: "\2022"
-                    color: $red1
+                    color: $red4
                 &.sidebar-entry-selected
                     @extend .ui-shadow
                     background: $blue4
@@ -280,10 +282,10 @@ html
                 background-color: $green0
             #gutter-left .la
                 background-color: lighten($red1, 5%)
-                border-left: 1px solid darken($red1, 10%)
+                border-left: 1px solid $red2
                 margin-left: -1px
                 margin-right: -1px
-                border-right: 1px solid darken($red1, 10%)
+                border-right: 1px solid $red2
             #gutter-right .la
                 background-color: $green1
                 border-left: 1px solid $green2
