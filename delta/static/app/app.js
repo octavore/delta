@@ -17,7 +17,7 @@ class AppController {
 
     this.fileGroups = m.prop([]);
     this.fileList = m.prop([]);
-    this.showMenu = m.prop(true);
+    this.showMenu = m.prop(false);
     this.showContext = m.prop(true);
     this.showEmpty = m.prop(true);
 
@@ -88,6 +88,7 @@ class AppController {
 
   updateSidebar() {
     let groups = {};
+    let fileList = [];
     this.fileList([]);
     storage.collect(metadata.dirhash, metadata.timestamp, (meta) => {
       let dir = path.dirname(meta.merged);
@@ -96,9 +97,13 @@ class AppController {
     }).then(() => {
       let sortedGroups = Object.keys(groups).sort();
       this.fileGroups(sortedGroups.map((group) => {
-        this.fileList(this.fileList().concat(groups[group]));
+        fileList = fileList.concat(groups[group]);
         return {dir: group, files: groups[group]};
       }));
+      if (fileList.length > 1) {
+        this.showMenu(true);
+      }
+      this.fileList(fileList);
       m.redraw();
     });
   }
