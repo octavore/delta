@@ -61,7 +61,7 @@ func main() {
 	}
 	pathFrom := flag.Arg(0)
 	pathTo := flag.Arg(1)
-	pathBase := ""
+	pathBase := flag.Arg(1)
 	if flag.NArg() > 2 {
 		pathBase = flag.Arg(2)
 	}
