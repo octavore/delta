@@ -1,8 +1,7 @@
 # Delta
 
 Delta is both a Go library and a command-line utility for text diffs. Diffs
-can be displayed in the command-line, or in the browser using the `--open`
-flag.
+can be displayed in the browser, or in command-line using the `--cli` flag.
 
 ## Installation
 

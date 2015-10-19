@@ -32,11 +32,11 @@ import (
 	"github.com/octavore/delta/formatter"
 )
 
-const VERSION = "0.3.0"
+const VERSION = "0.4.0"
 
 func main() {
 	// only one of the following should be provided
-	open := flag.Bool("open", false, "open the file in the gui")
+	cli := flag.Bool("cli", false, "open the file in the terminal")
 	html := flag.Bool("html", false, "print out html")
 	install := flag.Bool("install", false, "install to gitconfig")
 	uninstall := flag.Bool("uninstall", false, "remove from gitconfig")
@@ -73,7 +73,7 @@ func main() {
 		pprof.StartCPUProfile(f)
 		defer pprof.StopCPUProfile()
 	}
-	if *open {
+	if !*cli {
 		openDiff(pathFrom, pathTo, pathBase)
 	} else {
 		printDiff(pathFrom, pathTo, *html)
@@ -177,7 +177,7 @@ func installGit() {
 	commands := [][]string{
 		{"git", "config", "--global", "diff.tool", "delta"},
 		{"git", "config", "--global", "difftool.prompt", "false"},
-		{"git", "config", "--global", "difftool.delta.cmd", `delta -open "$LOCAL" "$REMOTE" "$MERGED"`},
+		{"git", "config", "--global", "difftool.delta.cmd", `delta "$LOCAL" "$REMOTE" "$MERGED"`},
 	}
 
 	for _, c := range commands {
