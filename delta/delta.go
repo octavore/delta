@@ -28,8 +28,8 @@ import (
 
 	"github.com/octavore/delta"
 	"github.com/octavore/delta/delta/static"
-	"github.com/octavore/delta/delta/vendor/browser"
 	"github.com/octavore/delta/formatter"
+	"github.com/pkg/browser"
 )
 
 const VERSION = "0.4.0"
