@@ -6,6 +6,7 @@
     "browserify": "^11.2.0",
     "eslint": "^1.6.0",
     "node-sass": "^3.3.3",
+    "normalize.css": "^3.0.3",
     "uglifyify": "^3.0.1"
   },
   "eslintConfig": {

@@ -29,6 +29,7 @@ import (
 	"github.com/octavore/delta"
 	"github.com/octavore/delta/delta/static"
 	"github.com/octavore/delta/formatter"
+
 	"github.com/pkg/browser"
 )
 
@@ -38,9 +39,9 @@ func main() {
 	// only one of the following should be provided
 	cli := flag.Bool("cli", false, "open the file in the terminal")
 	html := flag.Bool("html", false, "print out html")
+	version := flag.Bool("version", false, "display delta version")
 	install := flag.Bool("install", false, "install to gitconfig")
 	uninstall := flag.Bool("uninstall", false, "remove from gitconfig")
-	version := flag.Bool("version", false, "display delta version")
 
 	cpuprofile := flag.String("cpuprofile", "", "write cpu profile to file")
 	flag.Parse()
@@ -73,8 +74,13 @@ func main() {
 		pprof.StartCPUProfile(f)
 		defer pprof.StopCPUProfile()
 	}
+
+	config, err := loadConfig()
+	if err != nil {
+		fmt.Println("warning: error parsing .deltarc file")
+	}
 	if !*cli {
-		openDiff(pathFrom, pathTo, pathBase)
+		openDiff(pathFrom, pathTo, pathBase, config)
 	} else {
 		printDiff(pathFrom, pathTo, *html)
 	}
@@ -90,7 +96,7 @@ func getAsset(path string) string {
 
 // openDiffs diffs the given files and writes the result to a tempfile,
 // then opens it in the gui.
-func openDiff(pathFrom, pathTo, pathBase string) {
+func openDiff(pathFrom, pathTo, pathBase string, config Config) {
 	d, err := diff(pathFrom, pathTo)
 	if err != nil {
 		os.Stderr.WriteString(err.Error())
@@ -126,10 +132,12 @@ func openDiff(pathFrom, pathTo, pathBase string) {
 		Timestamp: time.Now().UnixNano() / 1000000, // convert to millis
 	}
 	meta, _ := json.Marshal(m)
+	cfg, _ := json.Marshal(config)
 	tmpl := template.Must(template.New("compare").Parse(getAsset("compare.html")))
 	buf := &bytes.Buffer{}
 	err = tmpl.Execute(buf, map[string]interface{}{
 		"metadata": template.JS(string(meta)),
+		"config":   template.JS(cfg),
 		"content":  template.HTML(html),
 		"CSS":      template.CSS(getAsset("app.css")),
 		"JS": map[string]interface{}{

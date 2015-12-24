@@ -54,7 +54,7 @@ type SequenceDiffer struct {
 	solution [][]LineSource // a x b results matrix
 
 	ignoreWhitespace bool
-	weights weights
+	weights          weights
 }
 
 // NewSequenceDiffer returns a new SequenceDiffer to compare two lists of strings.

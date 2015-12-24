@@ -5,8 +5,40 @@ import path from "path";
 import * as storage from "./lib/storage";
 import langMap from "./lib/lang";
 
+let defaultConfig = {
+  // context is the number of lines of surrounding lines to show.
+  // valid values are 0-4, and `"false"` to show all context
+  context: 4,
+
+  // showEmpty toggles hiding of empty lines in the diff. Empty diff lines are
+  // created when there is an added or deleted line.
+  showEmpty: true,
+
+  // shouldCollapse toggles collapsing of browser tabs for a group of diffs
+  // into a single tab.
+  shouldCollapse: true,
+
+  // highlight toggles syntax highlighting
+  highlight: true,
+
+  // unmodifiedOpacity controls the opacity of unmodified lines. Set to
+  // 0 to use the stylesheet default
+  unmodifiedOpacity: false,
+
+  // diffFontSize controls the font size in the diff. Set to 0 to use the
+  // stylesheet default
+  diffFontSize: false,
+};
+
+function merge(a, b={}) {
+  let out = {};
+  Object.keys(a).forEach((k) => out[k] = a[k]);
+  Object.keys(b).forEach((k) => out[k] = b[k]);
+  return out;
+}
+
 class AppController {
-  constructor() {
+  constructor(config) {
     this.currentFile = m.prop(metadata);
     this.currentDiff = m.prop(document.querySelector("#diff").innerHTML);
     this.fileSaved = false;
@@ -15,12 +47,12 @@ class AppController {
       this.fileSaved = true;
     });
 
+    this.config = merge(defaultConfig, config);
     this.fileGroups = m.prop([]);
     this.fileList = m.prop([]);
     this.showMenu = m.prop(false);
-    this.showContext = m.prop(true);
-    this.showEmpty = m.prop(true);
-
+    this.showContext = m.prop(this.config.context+1);
+    this.showEmpty = m.prop(this.config.showEmpty);
     // polling to detect if storage changes. if it changes,
     // then close this tab because that indicates another was
     // opened. only poll for 1 second, after that consider this tab
@@ -34,8 +66,8 @@ class AppController {
   }
 
   _poll() {
-    // if the file has not been saved, continue
-    if (!this.fileSaved) {
+    // abort if the file has not been saved or collapsing has been disabled
+    if (!this.fileSaved || !this.config.shouldCollapse) {
       return;
     }
 
@@ -90,6 +122,9 @@ class AppController {
     let groups = {};
     let fileList = [];
     this.fileList([]);
+    if (!this.config.shouldCollapse) {
+      return;
+    }
     storage.collect(metadata.dirhash, metadata.timestamp, (meta) => {
       let dir = path.dirname(meta.merged);
       groups[dir] = groups[dir] || [];
@@ -151,56 +186,69 @@ function sidebar(dir, ctrl) {
   });
 }
 
-window.App = {
-  controller: AppController,
-  view: (ctrl) => {
-    let doc = document.createElement("div");
-    if (ctrl.currentFile() != null) {
-      doc.innerHTML = ctrl.currentDiff();
-      let diffs = doc.querySelectorAll(".diff-pane");
-      for (let i = 0; i < diffs.length; i++) {
-        let lang = langMap[path.extname(ctrl.currentFile().merged)];
-        if (lang != null) {
-          diffs[i].classList.add(`lang-${lang}`);
-        }
-
-        // highlighting long things takes a while.
-        if (diffs[i].innerHTML.length < 1000000) {
-          hljs.highlightBlock(diffs[i]);
-        }
-
-        // remove extra nodes that hljs adds sometimes
-        let l = diffs[i].querySelectorAll(".diff-pane-contents > :not(.line)");
-        for (var j = 0; j < l.length; j++) { l[j].remove(); }
-      }
-    }
-
-    return m("#contents", [
-      m(`#sidebar.sidebar-show-${ctrl.showMenu()}`,
-        m(".sidebar-inner",
-          m("a.sidebar-header", {href: "https://github.com/octavore/delta"}, "Delta"),
-          sidebar(metadata.dir, ctrl)
-        )
-      ),
-      m("#diff", ctrl.currentFile() == null ? null :
-        [
-          m(".diff-row.diff-row-headers",
-            ctrl.currentFile().merged != null ?
-              m(".diff-pane", ctrl.currentFile().merged) : [
-              m(".diff-pane", ctrl.currentFile().from),
-              m(".diff-pane", ctrl.currentFile().to)
-            ]
-          ),
-          m(".diff-row-padding"),
-          m(`.diff-row.diff-context-${ctrl.showContext()}.diff-empty-${ctrl.showEmpty()}`, {
-            config: (el) => {
-              el.innerHTML = "";
-              while (doc.childNodes.length > 0) {
-                el.appendChild(doc.childNodes[0]);
-              }
+window.App = (config) => {
+  return {
+    controller: () => new AppController(config),
+    view: (ctrl) => {
+      let doc = document.createElement("div");
+      if (ctrl.currentFile() != null) {
+        doc.innerHTML = ctrl.currentDiff();
+        let diffs = doc.querySelectorAll(".diff-pane");
+        if (ctrl.config.highlight) {
+          for (let i = 0; i < diffs.length; i++) {
+            let lang = langMap[path.extname(ctrl.currentFile().merged)];
+            if (lang != null) {
+              diffs[i].classList.add(`lang-${lang}`);
             }
-          })
-        ])
-    ]);
-  }
+
+            // highlighting long things takes a while.
+            if (diffs[i].innerHTML.length < 1000000) {
+              hljs.highlightBlock(diffs[i]);
+            }
+
+            // remove extra nodes that hljs adds sometimes
+            let l = diffs[i].querySelectorAll(".diff-pane-contents > :not(.line)");
+            for (var j = 0; j < l.length; j++) { l[j].remove(); }
+          }
+        }
+      }
+
+      let style = "";
+      if (parseFloat(ctrl.config.unmodifiedOpacity) > 0) {
+        style += `.lm { opacity: ${parseFloat(ctrl.config.unmodifiedOpacity)} !important} `;
+      }
+      if (parseFloat(ctrl.config.diffFontSize) > 0) {
+        style += `.diff-row { font-size: ${parseFloat(ctrl.config.diffFontSize)}px !important} `;
+      }
+
+      return m("#contents", [
+        m("style", style),
+        m(`#sidebar.sidebar-show-${ctrl.showMenu()}`,
+          m(".sidebar-inner",
+            m("a.sidebar-header", {href: "https://github.com/octavore/delta"}, "Delta"),
+            sidebar(metadata.dir, ctrl)
+          )
+        ),
+        m("#diff", ctrl.currentFile() == null ? null :
+          [
+            m(".diff-row.diff-row-headers",
+              ctrl.currentFile().merged != null ?
+                m(".diff-pane", ctrl.currentFile().merged) : [
+                m(".diff-pane", ctrl.currentFile().from),
+                m(".diff-pane", ctrl.currentFile().to)
+              ]
+            ),
+            m(".diff-row-padding"),
+            m(`.diff-row.diff-context-${ctrl.showContext()}.diff-empty-${ctrl.showEmpty()}`, {
+              config: (el) => {
+                el.innerHTML = "";
+                while (doc.childNodes.length > 0) {
+                  el.appendChild(doc.childNodes[0]);
+                }
+              }
+            })
+          ])
+      ]);
+    }
+  };
 };

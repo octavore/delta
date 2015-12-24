@@ -189,21 +189,6 @@ html
                     display: none
                     &.line-ws, &.ln, &.la, &.lm
                         display: block
-            &.diff-context-true
-                .diff-pane, .gutter
-                    .lc-10
-                        height: 0px
-                        margin: 10px 0
-                        overflow: hidden
-                        box-shadow: 0 0 8px 1px rgba(0,0,0,0.8)
-                        opacity: 0.3
-                        display: block
-                    .lc-9 + .lc-10
-                        display: block !important
-                    .lc-10 ~ .lc-10
-                        display: none
-                    .lc--1
-                        display: none
             // This section contains css voodoo. basically, we want to
             // make sure that we display only one divider when hiding code,
             // but context levels elemenets are distributed something like this:

@@ -13,7 +13,7 @@
     <script type="text/javascript">{{ .JS.app }}</script>
     <script type="text/javascript">
       window.onload = function() {
-        m.mount(document.getElementById("app"), App);
+        m.mount(document.getElementById("app"), App({{ .config }}));
       }
     </script>
   </head>
