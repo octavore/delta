@@ -23,6 +23,14 @@ to `git`, where it can be used with the `git diff --histogram` command. This
 implementation post processes the histogram diff in order to push down match
 regions as far as possible. `git` also post processes diffs.
 
+## Other Usage
+
+```
+delta --cli <fileA> <fileB>         # print text diff to stdout
+delta --cli --html <fileA> <fileB>  # print html diff to stdout
+delta --gist <fileA> <fileB>        # upload html diff to a gist
+```
+
 ## Configure Git
 
 The `delta` binary must be on your `$PATH` in order for this work. The
@@ -30,6 +38,32 @@ following are helpers for adding `delta` to your `~/.gitconfig` file.
 
     delta --install   # makes delta the default for `git difftool`
     delta --uninstall # remove delta from your gitconfig
+
+## User Config
+
+You can configure `delta` using a `~/.deltarc` file, for example:
+
+```
+{
+  "context": 9,
+  "showEmpty": true,
+  "shouldCollapse": false,
+  "highlight": true,
+  "unmodifiedOpacity": 0.8,
+  "diffFontSize": 12
+}
+```
+
+### Options
+
+config key          | key type  | description
+------------------- | --------- | ------------------------------------------
+`context`           | `integer` | between 0 and 4 number of lines of context to show
+`showEmpty`         | `bool`    | whether to hide empty lines
+`shouldCollapse`    | `bool`    | whether to merge browser tabs
+`highlight`         | `bool`    | toggles syntax highlighting
+`unmodifiedOpacity` | `float`   | opacity of unmodified lines, between 0.1 and 1
+`diffFontSize`      | `integer` | font size of the diff
 
 ## Browser Support
 
