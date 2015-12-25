@@ -13,21 +13,16 @@ package main
 
 import (
 	"bytes"
-	"crypto/md5"
-	"encoding/hex"
 	"encoding/json"
 	"flag"
 	"fmt"
 	"html/template"
 	"io/ioutil"
 	"os"
-	"os/exec"
-	"runtime/pprof"
 	"strings"
 	"time"
 
 	"github.com/octavore/delta"
-	"github.com/octavore/delta/delta/static"
 	"github.com/octavore/delta/formatter"
 
 	"github.com/pkg/browser"
@@ -36,14 +31,14 @@ import (
 const VERSION = "0.4.0"
 
 func main() {
-	// only one of the following should be provided
-	cli := flag.Bool("cli", false, "open the file in the terminal")
-	html := flag.Bool("html", false, "print out html")
+	cli := flag.Bool("cli", false, "print the diff to stdout")
+	gist := flag.Bool("gist", false, "upload gist to github")
 	version := flag.Bool("version", false, "display delta version")
 	install := flag.Bool("install", false, "install to gitconfig")
 	uninstall := flag.Bool("uninstall", false, "remove from gitconfig")
 
-	cpuprofile := flag.String("cpuprofile", "", "write cpu profile to file")
+	html := flag.Bool("html", false, "use with --cli to output html instead of text diff")
+
 	flag.Parse()
 	switch {
 	case *version:
@@ -66,43 +61,40 @@ func main() {
 	if flag.NArg() > 2 {
 		pathBase = flag.Arg(2)
 	}
-	if *cpuprofile != "" {
-		f, err := os.Create(*cpuprofile)
-		if err != nil {
-			panic(err)
-		}
-		pprof.StartCPUProfile(f)
-		defer pprof.StopCPUProfile()
-	}
 
 	config, err := loadConfig()
 	if err != nil {
 		fmt.Println("warning: error parsing .deltarc file")
 	}
-	if !*cli {
-		openDiff(pathFrom, pathTo, pathBase, config)
-	} else {
-		printDiff(pathFrom, pathTo, *html)
-	}
-}
 
-func getAsset(path string) string {
-	a, err := static.Asset(path)
-	if err != nil {
-		panic(err)
-	}
-	return string(a)
-}
-
-// openDiffs diffs the given files and writes the result to a tempfile,
-// then opens it in the gui.
-func openDiff(pathFrom, pathTo, pathBase string, config Config) {
 	d, err := diff(pathFrom, pathTo)
 	if err != nil {
 		os.Stderr.WriteString(err.Error())
 		return
 	}
 
+	if err != nil {
+		os.Stderr.WriteString(err.Error())
+		return
+	}
+	if *cli && !*html {
+		fmt.Println(formatter.ColoredText(d))
+		return
+	}
+	page, err := render(d, pathFrom, pathTo, pathBase, config)
+	switch {
+	case *cli:
+		page.WriteTo(os.Stdout)
+	case *gist:
+		uploadGist(page.Bytes())
+	default:
+		browser.OpenReader(page)
+	}
+}
+
+// openDiffs diffs the given files and writes the result to a tempfile,
+// then opens it in the gui.
+func render(d *delta.DiffSolution, pathFrom, pathTo, pathBase string, config Config) (*bytes.Buffer, error) {
 	change := changeModified
 	if pathTo == "/dev/null" {
 		change = changeDeleted
@@ -135,7 +127,7 @@ func openDiff(pathFrom, pathTo, pathBase string, config Config) {
 	cfg, _ := json.Marshal(config)
 	tmpl := template.Must(template.New("compare").Parse(getAsset("compare.html")))
 	buf := &bytes.Buffer{}
-	err = tmpl.Execute(buf, map[string]interface{}{
+	err := tmpl.Execute(buf, map[string]interface{}{
 		"metadata": template.JS(string(meta)),
 		"config":   template.JS(cfg),
 		"content":  template.HTML(html),
@@ -148,11 +140,7 @@ func openDiff(pathFrom, pathTo, pathBase string, config Config) {
 			"app":       template.JS(getAsset("app.js")),
 		},
 	})
-	if err != nil {
-		panic(err)
-	}
-
-	browser.OpenReader(buf)
+	return buf, err
 }
 
 // diff reads in files in pathFrom and pathTo, and returns a diff
@@ -166,53 +154,4 @@ func diff(pathFrom, pathTo string) (*delta.DiffSolution, error) {
 		return nil, fmt.Errorf("error reading %q: %v", pathTo, err)
 	}
 	return delta.HistogramDiff(string(from), string(to)), nil
-}
-
-func printDiff(pathFrom, pathTo string, html bool) {
-	d, err := diff(pathFrom, pathTo)
-	if err != nil {
-		os.Stderr.WriteString(err.Error())
-		return
-	}
-	if html {
-		fmt.Println(formatter.HTML(d))
-		return
-	}
-	fmt.Println(formatter.ColoredText(d))
-}
-
-func installGit() {
-	commands := [][]string{
-		{"git", "config", "--global", "diff.tool", "delta"},
-		{"git", "config", "--global", "difftool.prompt", "false"},
-		{"git", "config", "--global", "difftool.delta.cmd", `delta "$LOCAL" "$REMOTE" "$MERGED"`},
-	}
-
-	for _, c := range commands {
-		fmt.Println(strings.Join(c, " "))
-		o, _ := exec.Command(c[0], c[1:]...).CombinedOutput()
-		fmt.Print(string(o))
-	}
-}
-
-// known issue: this does not remove the gitconfig section if the unset
-// operation causes the section to become empty.
-func uninstallGit() {
-	commands := [][]string{
-		{"git", "config", "--global", "--unset", "diff.tool"},
-		{"git", "config", "--global", "--unset", "difftool.prompt"},
-		{"git", "config", "--global", "--remove-section", "difftool.delta"},
-	}
-
-	for _, c := range commands {
-		fmt.Println(strings.Join(c, " "))
-		o, _ := exec.Command(c[0], c[1:]...).CombinedOutput()
-		fmt.Print(string(o))
-	}
-}
-
-func md5sum(s string) string {
-	hash := md5.New()
-	_, _ = hash.Write([]byte(s))
-	return hex.EncodeToString(hash.Sum(nil))
 }
