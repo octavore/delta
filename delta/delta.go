@@ -28,7 +28,7 @@ import (
 	"github.com/pkg/browser"
 )
 
-const VERSION = "0.4.0"
+const VERSION = "0.5.0"
 
 func main() {
 	cli := flag.Bool("cli", false, "print the diff to stdout")
