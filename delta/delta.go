@@ -143,7 +143,7 @@ func openDiff(pathFrom, pathTo, pathBase string, config Config) {
 		"JS": map[string]interface{}{
 			"mithril":   template.JS(getAsset("vendor/mithril.min.js")),
 			"mousetrap": template.JS(getAsset("vendor/mousetrap.min.js")),
-			"highlight": template.JS(getAsset("vendor/highlight.js")),
+			"highlight": template.JS(getAsset("vendor/highlight.min.js")),
 			"pouchdb":   template.JS(getAsset("vendor/pouchdb.min.js")),
 			"app":       template.JS(getAsset("app.js")),
 		},
