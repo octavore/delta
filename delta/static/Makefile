@@ -11,13 +11,14 @@ sass:
 
 js:
 	@$(npmbin)/browserify app/app.js \
-	  -t babelify \
+	  -t [ babelify --presets [ es2015 ] ] \
 	  -g uglifyify \
 	  --outfile app.js
 	@echo "Wrote app.js"
 
 jsdebug:
 	@$(npmbin)/browserify app/app.js \
+	  -t [ babelify --presets [ es2015 ] ] \
 	  -t babelify \
 	  --debug \
 	  --outfile app.js
