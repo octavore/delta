@@ -5,9 +5,7 @@ can be displayed in the browser, or in command-line using the `--cli` flag.
 
 ## Installation
 
-    go get github.com/octavore/delta/delta
-
-If `$GOPATH/bin` is on your `$PATH`, run `delta -h` for usage.
+    brew install octavore/tools/delta
 
 ## Description
 
@@ -83,6 +81,14 @@ Browser support relies on the following open source libraries:
 
 ## Development
 
+### Compiling From Source
+
+    go get github.com/octavore/delta/delta
+
+If `$GOPATH/bin` is on your `$PATH`, run `delta -h` for usage.
+
+### Regenerating Assets
+
 You will need `npm` to install the necessary node packages for compiling the
 front-end assets.
 
@@ -92,13 +98,9 @@ binary.
 
 ## TODO
 
-- add support for hiding unchanged parts of the diff.
 - make differ/histogram diff functions more consistent and add an interface.
 - more comments for godoc/golint.
-- upload gist to rawgit
 - fix race condition in update
 - favicon
-- add folder names in sidebar
 - make sidebar resizable
-- add ability to modify hidden context
 
