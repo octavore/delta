@@ -22,8 +22,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/octavore/delta"
-	"github.com/octavore/delta/formatter"
+	"github.com/octavore/delta/lib"
+	"github.com/octavore/delta/lib/formatter"
 
 	"github.com/pkg/browser"
 )

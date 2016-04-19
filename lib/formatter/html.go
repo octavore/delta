@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/octavore/delta"
+	"github.com/octavore/delta/lib"
 )
 
 const (

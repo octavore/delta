@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"fmt"
 
-	"github.com/octavore/delta"
+	"github.com/octavore/delta/lib"
 )
 
 func ColoredText(d *delta.DiffSolution) string {

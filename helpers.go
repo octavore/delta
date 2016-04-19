@@ -4,7 +4,7 @@ import (
 	"crypto/md5"
 	"encoding/hex"
 
-	"github.com/octavore/delta/delta/static"
+	"github.com/octavore/delta/static"
 )
 
 func getAsset(path string) string {
