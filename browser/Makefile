@@ -27,7 +27,7 @@ jsdebug:
 bindata.go:
 	@$(gobin)/go-bindata \
 	  -ignore "\.DS_Store" \
-	  -pkg "static" \
+	  -pkg "browser" \
 	  app.js \
 	  app.css \
 	  vendor \

@@ -4,11 +4,11 @@ import (
 	"crypto/md5"
 	"encoding/hex"
 
-	"github.com/octavore/delta/static"
+	"github.com/octavore/delta/browser"
 )
 
 func getAsset(path string) string {
-	a, err := static.Asset(path)
+	a, err := browser.Asset(path)
 	if err != nil {
 		panic(err)
 	}
