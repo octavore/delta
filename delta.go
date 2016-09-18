@@ -28,73 +28,133 @@ import (
 	"github.com/pkg/browser"
 )
 
-const VERSION = "0.5.0"
+// Version of this release
+const Version = "0.6.0"
+
+// constants for command line options
+const (
+	OutputOptionCLI     = "cli"
+	OutputOptionBrowser = "browser"
+	OutputOptionGist    = "gist"
+
+	FormatOptionHTML    = "html"
+	FormatOptionText    = "text"
+	FormatOptionDefault = "default"
+)
+
+var (
+	// commands
+	install   = flag.Bool("install", false, "Install to gitconfig.")
+	uninstall = flag.Bool("uninstall", false, "Remove from gitconfig.")
+	version   = flag.Bool("version", false, "Display delta version.")
+
+	// diff settings
+	output = flag.String("output", "cli", "Where to send the output. Valid values: browser (default), cli, gist.")
+	format = flag.String("format", "default", `Format of the output. `)
+)
 
 func main() {
-	cli := flag.Bool("cli", false, "print the diff to stdout")
-	gist := flag.Bool("gist", false, "upload gist to github")
-	version := flag.Bool("version", false, "display delta version")
-	install := flag.Bool("install", false, "install to gitconfig")
-	uninstall := flag.Bool("uninstall", false, "remove from gitconfig")
-
-	html := flag.Bool("html", false, "use with --cli to output html instead of text diff")
-
+	flag.CommandLine.Usage = printHelp
 	flag.Parse()
-	switch {
-	case *version:
-		fmt.Println("delta", VERSION)
-		return
-	case *install:
-		installGit()
-		return
-	case *uninstall:
-		uninstallGit()
+	if *install || *uninstall || *version {
+		switch {
+		case *version:
+			printVersion()
+		case *install:
+			installGit()
+		case *uninstall:
+			uninstallGit()
+		}
 		return
 	}
 	if flag.NArg() < 2 {
-		flag.PrintDefaults()
+		printVersion()
+		printHelp()
 		return
 	}
-	pathFrom := flag.Arg(0)
-	pathTo := flag.Arg(1)
-	pathBase := flag.Arg(1)
+	pathFrom, pathTo := flag.Arg(0), flag.Arg(1)
+	pathBase := pathTo
 	if flag.NArg() > 2 {
 		pathBase = flag.Arg(2)
 	}
+	runDiff(pathFrom, pathTo, pathBase)
+}
 
+func printHelp() {
+	fmt.Println()
+	fmt.Println("USAGE:")
+	fmt.Println()
+	fmt.Println("delta OPTION_COMMAND")
+
+	fmt.Printf("%-20s %s\n", "  --install", "Install delta to gitconfig.")
+	fmt.Printf("%-20s %s\n", "  --uninstall", "Remove delta from gitconfig.")
+	fmt.Printf("%-20s %s\n", "  --version", "Display delta version.")
+
+	// diff settings
+	fmt.Println("\ndelta [OPTIONS] FILE1 FILE2")
+	fmt.Printf("%-20s %s\n", "  --output", "Where to send the output. Valid values: browser, cli (default), gist.")
+	fmt.Printf("%-20s %s\n", "  --format", `Valid values: default (text for cli, html otherwise), html, text.`)
+	fmt.Println()
+}
+
+func printVersion() {
+	fmt.Println("delta", Version)
+}
+
+func runDiff(pathFrom, pathTo, pathBase string) {
 	config, err := loadConfig()
 	if err != nil {
-		fmt.Println("warning: error parsing .deltarc file")
+		os.Stderr.WriteString("warning: error parsing .deltarc file")
 	}
-
 	d, err := diff(pathFrom, pathTo)
 	if err != nil {
 		os.Stderr.WriteString(err.Error())
 		return
 	}
-
 	if err != nil {
 		os.Stderr.WriteString(err.Error())
 		return
 	}
-	if *cli && !*html {
-		fmt.Println(formatter.ColoredText(d))
-		return
+	if *format == FormatOptionDefault {
+		switch *output {
+		case OutputOptionBrowser, OutputOptionGist:
+			*format = FormatOptionHTML
+		case OutputOptionCLI:
+			*format = FormatOptionText
+		}
 	}
-	page, err := render(d, pathFrom, pathTo, pathBase, config)
-	switch {
-	case *cli:
-		page.WriteTo(os.Stdout)
-	case *gist:
-		uploadGist(page.Bytes())
-	default:
-		browser.OpenReader(page)
+
+	switch *format {
+	case FormatOptionHTML:
+		page, err := html(d, pathFrom, pathTo, pathBase, config)
+		if err != nil {
+			os.Stderr.WriteString(err.Error())
+			return
+		}
+		switch *output {
+		case OutputOptionCLI:
+			page.WriteTo(os.Stdout)
+		case OutputOptionGist:
+			uploadGist(page.Bytes())
+		case OutputOptionBrowser:
+			browser.OpenReader(page)
+		}
+
+	case FormatOptionText:
+		switch *output {
+		case OutputOptionCLI:
+			fmt.Println(formatter.ColoredText(d))
+		case OutputOptionGist:
+			uploadGist([]byte(formatter.Text(d)))
+		case OutputOptionBrowser:
+			browser.OpenReader(bytes.NewBufferString(formatter.Text(d)))
+		}
 	}
 }
 
 // openDiffs diffs the given files and writes the result to a tempfile,
 // then opens it in the gui.
-func render(d *delta.DiffSolution, pathFrom, pathTo, pathBase string, config Config) (*bytes.Buffer, error) {
+func html(d *delta.DiffSolution, pathFrom, pathTo, pathBase string, config Config) (*bytes.Buffer, error) {
 	change := changeModified
 	if pathTo == "/dev/null" {
 		change = changeDeleted
