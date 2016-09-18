@@ -23,3 +23,20 @@ func ColoredText(d *delta.DiffSolution) string {
 	}
 	return buf.String()
 }
+
+func Text(d *delta.DiffSolution) string {
+	buf := &bytes.Buffer{}
+	for _, l := range d.Lines {
+		if l[2] == "=" && l[0] == l[1] {
+			fmt.Fprintf(buf, " %s \n", l[0])
+			continue
+		}
+		if l[0] != "" {
+			fmt.Fprintf(buf, "-%s\n", l[0])
+		}
+		if l[1] != "" {
+			fmt.Fprintf(buf, "+%s\n", l[1])
+		}
+	}
+	return buf.String()
+}
