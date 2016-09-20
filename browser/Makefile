@@ -2,9 +2,9 @@
 npmbin := $(shell npm bin)
 gobin := $(GOPATH)/bin
 
-all: clean sass js bindata.go
+all: sass js bindata.go clean-intermediate
 
-debug: clean sass jsdebug bindata.go
+debug: sass jsdebug bindata.go
 
 sass:
 	@$(npmbin)/node-sass --output-style compressed styles/app.sass app.css
@@ -34,10 +34,11 @@ bindata.go:
 	  compare.html
 	@echo "Wrote bindata.go"
 
-clean:
+clean-intermediate:
+	@rm -f app.css app.js
+
+clean: clean-intermediate
 	@[ ! -e bindata.go ] || rm bindata.go
-	@[ ! -e app.css ] || rm app.css
-	@[ ! -e app.js ] || rm app.js
 
 highlight:
 	git clone https://github.com/isagalaev/highlight.js hljs
@@ -49,3 +50,4 @@ highlight:
 	$(npmbin)/uglifyjs hljs/build/highlight.pack.js -o vendor/highlight.min.js -b beautify=false,inline-script
 	rm -rf hljs
 
+.PHONY: bindata.go
