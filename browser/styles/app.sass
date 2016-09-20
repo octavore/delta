@@ -13,7 +13,10 @@ $green4: #0B3003
 $blue0: #182730
 $blue2: #2A5671
 $blue4: #3B85B1
+$border: #CCC
 $diffChangeColor: #FFFFD7
+
+$lineHeight: 16px
 
 html, body
     height: 100%
@@ -22,10 +25,10 @@ html, body
     background: $blue0
 
 html
-  box-sizing: border-box
+    box-sizing: border-box
 
 *, *:before, *:after
-  box-sizing: inherit
+    box-sizing: inherit
 
 .ui-shadow
     transition: all 0.3s ease-out
@@ -127,10 +130,7 @@ html
         flex-direction: column
         background: white
         overflow: hidden
-        .diff-row-padding
-            height: 50px
-            border-bottom: 1px solid #eee
-        .diff-row
+        .diff-section
             display: flex
             flex-grow: 1
             min-height: 100%
@@ -138,20 +138,53 @@ html
             padding: 0
             font-size: 11px
             font-family: "Menlo", "Monaco", monospace
-            &.diff-row-headers
+            &.diff-section-headers
                 position: fixed
                 z-index: 3
                 display: block
                 color: white
                 min-height: inherit
                 height: 40px
-                .diff-pane
-                    + .diff-pane
-                        border-left: 1px solid #444
-                    background: #1E323E
-                    @extend .ui-shadow
-                    padding: 12px 10px
-                    font-size: 13px
+                background: #1E323E
+                @extend .ui-shadow
+                padding: 12px 10px
+                font-size: 13px
+
+        // This section contains css voodoo. basically, we want to
+        // make sure that we display only one divider when hiding code,
+        // but context levels elemenets are distributed something like this:
+        //   i | i i | i i | i i | i
+        // where we only want one divider between each set of pipes, and
+        // also at the beginning and end.
+        // Therefore we take the following approach:
+        // 1. show all of lc-i
+        // 2. hide all of lc-i that is not the first
+        // 3. force display lc-i that follows lc-(i-1)
+        @for $i from 1 through 10
+            .diff-context-#{$i}
+                .diff-pane, .gutter
+                    .lc-#{$i}
+                        height: 0px !important
+                        margin: 14px 0
+                        overflow: hidden
+                        box-shadow: 0 0 10px 1px rgba(0,0,0,0.2)
+                        opacity: 0.3
+                        display: block
+                    .lc-#{$i - 1} + .lc-#{$i}
+                        display: block !important
+                    .lc-#{$i} ~ .lc-#{$i}
+                        display: none
+                    .lc--1
+                        display: none
+                    @for $j from $i+1 to 11
+                        .lc-#{$j}
+                            display: none
+
+        .diff-contents
+            display: flex
+            width: 100%
+            margin-top: 50px
+            border-top: 1px solid $border
             .hljs
                 padding: 0
             .gutter
@@ -160,8 +193,8 @@ html
                 font-size: 10px
                 background: #fafafa
                 text-align: right
-                border-right: 1px solid #ccc
-                border-left: 1px solid #ccc
+                border-right: 1px solid $border
+                border-left: 1px solid $border
                 min-width: 30px
                 color: rgba(0,0,0,0.4)
                 z-index: 2
@@ -176,9 +209,9 @@ html
                         margin-right: -1px
 
             .line
-                height: 16px
-                line-height: 16px
-                padding: 0px 5px
+                height: $lineHeight
+                line-height: $lineHeight
+                padding: 0px $lineHeight/2
                 &:last-child
                     border-bottom: 1px solid #ddd
                 &.line-ws, &.ln, &.la, &.lm
@@ -189,35 +222,6 @@ html
                     display: none
                     &.line-ws, &.ln, &.la, &.lm
                         display: block
-            // This section contains css voodoo. basically, we want to
-            // make sure that we display only one divider when hiding code,
-            // but context levels elemenets are distributed something like this:
-            //   i | i i | i i | i i | i
-            // where we only want one divider between each set of pipes, and
-            // also at the beginning and end.
-            // Therefore we take the following approach:
-            // 1. show all of lc-i
-            // 2. hide all of lc-i that is not the first
-            // 3. force display lc-i that follows lc-(i-1)
-            @for $i from 1 through 10
-                &.diff-context-#{$i}
-                    .diff-pane, .gutter
-                        .lc-#{$i}
-                            height: 0px
-                            margin: 14px 0
-                            overflow: hidden
-                            box-shadow: 0 0 10px 1px rgba(0,0,0,0.2)
-                            opacity: 0.3
-                            display: block
-                        .lc-#{$i - 1} + .lc-#{$i}
-                            display: block !important
-                        .lc-#{$i} ~ .lc-#{$i}
-                            display: none
-                        .lc--1
-                            display: none
-                        @for $j from $i+1 to 11
-                            .lc-#{$j}
-                                display: none
 
             .diff-pane
                 @include flex(1 1 50%)
@@ -228,40 +232,41 @@ html
                     float: left
                     background: white
                     min-width: 100%
-                .line
-                    white-space: pre
-                    tab-size: 4;
-                    background: #eee
-                    .w-add, .w-del, .w-edit
-                        display: inline-block
-                        vertical-align: bottom
-                        height: 16px
-                        &:empty
-                            border-left: 1px solid white
-                            + span:empty
-                                display: none
-                    .w-add
-                        background: $green0
-                        &:empty
-                            border-color: $green1
-                    .w-del
-                        background: $red1
-                        &:empty
-                            border-color: darken($red1, 20%)
-                    .w-edit
-                        background: darken($diffChangeColor, 20%)
-                .lm
-                    opacity: 0.4
-                    background: white
-                .line-ws
-                    background-color: tint($diffChangeColor, 50%)
-                .ln
-                    background-color: $diffChangeColor
-                .line-ws, .ln, .la
-                    .delta-tab:before
-                      content: "\25b8"
-                      color: #ddd
-                      padding-left: 11px
+                    .line
+                        white-space: pre
+                        tab-size: 4;
+                        background: #eee
+                        .w-add, .w-del, .w-edit
+                            display: inline-block
+                            vertical-align: bottom
+                            height: $lineHeight
+                            &:empty
+                                border-left: 1px solid white
+                                + span:empty
+                                    display: none
+                        .w-add
+                            background: $green0
+                            &:empty
+                                border-color: $green1
+                        .w-del
+                            background: $red1
+                            &:empty
+                                border-color: darken($red1, 20%)
+                        .w-edit
+                            background: darken($diffChangeColor, 20%)
+                    .lm
+                        opacity: 0.4
+                        background: white
+                    .line-ws
+                        background-color: tint($diffChangeColor, 50%)
+                    .ln
+                        background-color: $diffChangeColor
+                    .line-ws, .ln, .lm, .la,
+                        .delta-tab:before
+                            content: "\25b8"
+                            color: #ddd
+                            padding-left: 11px
+
             #diff-left .la
                 background-color: $red1
             #diff-right .la

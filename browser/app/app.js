@@ -271,7 +271,7 @@ window.App = (config) => {
         style += `.lm { opacity: ${parseFloat(ctrl.config.unmodifiedOpacity)} !important} `;
       }
       if (parseFloat(ctrl.config.diffFontSize) > 0) {
-        style += `.diff-row { font-size: ${parseFloat(ctrl.config.diffFontSize)}px !important} `;
+        style += `.diff-section { font-size: ${parseFloat(ctrl.config.diffFontSize)}px !important} `;
       }
 
       return m("#contents", [
@@ -284,15 +284,14 @@ window.App = (config) => {
         ),
         m("#diff",
           ctrl.currentFile() == null ? null : [
-            m(".diff-row.diff-row-headers",
+            m(".diff-section.diff-section-headers",
               ctrl.currentFile().merged != null ?
                 m(".diff-pane", ctrl.currentFile().merged) : [
                   m(".diff-pane", ctrl.currentFile().from),
                   m(".diff-pane", ctrl.currentFile().to)
                 ]
             ),
-            m(".diff-row-padding"),
-            m(`.diff-row.diff-context-${ctrl.showContext()}.diff-empty-${ctrl.showEmpty()}`, {
+            m(`.diff-section.diff-context-${ctrl.showContext()}.diff-empty-${ctrl.showEmpty()}`, {
               config: (el) => {
                 el.innerHTML = "";
                 while (doc.childNodes.length > 0) {
