@@ -1,4 +1,4 @@
 node_modules
-delta/static/app.css
-delta/static/app.js
+browser/app.css
+browser/app.js
 browser/bindata.go
