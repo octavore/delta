@@ -28,9 +28,6 @@ import (
 	"github.com/pkg/browser"
 )
 
-// Version of this release
-const Version = "0.6.0"
-
 // constants for command line options
 const (
 	OutputOptionCLI     = "cli"
