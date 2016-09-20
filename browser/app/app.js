@@ -28,9 +28,12 @@ let defaultConfig = {
   // diffFontSize controls the font size in the diff. Set to 0 to use the
   // stylesheet default
   diffFontSize: false,
+
+  // wrap controls whether to wrap long lines
+  wrap: false,
 };
 
-function merge(a, b={}) {
+function merge(a, b = {}) {
   let out = {};
   Object.keys(a).forEach((k) => out[k] = a[k]);
   Object.keys(b).forEach((k) => out[k] = b[k]);
@@ -51,8 +54,10 @@ class AppController {
     this.fileGroups = m.prop([]);
     this.fileList = m.prop([]);
     this.showMenu = m.prop(false);
-    this.showContext = m.prop(this.config.context+1);
+    this.showContext = m.prop(this.config.context + 1);
     this.showEmpty = m.prop(this.config.showEmpty);
+    this.wrapLines = m.prop(this.config.wrap);
+
     // polling to detect if storage changes. if it changes,
     // then close this tab because that indicates another was
     // opened. only poll for 1 second, after that consider this tab
@@ -63,6 +68,7 @@ class AppController {
     this.poll = setInterval(this._poll.bind(this), 10);
 
     this._initKeyBindings();
+    this._initScrollHandler();
   }
 
   _poll() {
@@ -104,8 +110,55 @@ class AppController {
       this.showMenu(!this.showMenu());
       m.redraw();
     });
+    Mousetrap.bind("w", () => {
+      this.wrapLines(!this.wrapLines());
+      this.applyWrap();
+    });
     Mousetrap.bind("j", this.nextFile.bind(this));
     Mousetrap.bind("k", this.prevFile.bind(this));
+  }
+
+  _initScrollHandler() {
+    window.addEventListener("resize", () => {
+      this.applyWrap();
+    });
+  }
+
+  // applyWrap iterates over all lines and resizes them to fit wrapped contents
+  applyWrap() {
+    let diffs = document.querySelectorAll(".diff-pane-contents");
+    if (diffs.length == 0) {
+      return;
+    }
+    let left = diffs[0].querySelectorAll('.line');
+    let right = diffs[1].querySelectorAll('.line');
+    let leftGutter = document.querySelectorAll("#gutter-left .line");
+    let rightGutter = document.querySelectorAll("#gutter-right .line");
+
+    for (var i = 0; i < left.length; i++) {
+      let ll = left[i];
+      let rl = right[i];
+      let lg = leftGutter[i];
+      let rg = rightGutter[i];
+      if (!this.wrapLines()) {
+        ll.style.whiteSpace = 'pre';
+        rl.style.whiteSpace = 'pre';
+        ll.style.height = '';
+        rl.style.height = '';
+        lg.style.height = '';
+        rg.style.height = '';
+      } else {
+        ll.style.whiteSpace = 'pre-wrap';
+        rl.style.whiteSpace = 'pre-wrap';
+        ll.style.height = 'auto';
+        rl.style.height = 'auto';
+        let h = Math.max(ll.offsetHeight, rl.offsetHeight, 16);
+        ll.style.height = h + 'px';
+        rl.style.height = h + 'px';
+        lg.style.height = h + 'px';
+        rg.style.height = h + 'px';
+      }
+    }
   }
 
   setCurrentFile(metadata) {
@@ -133,7 +186,7 @@ class AppController {
       let sortedGroups = Object.keys(groups).sort();
       this.fileGroups(sortedGroups.map((group) => {
         fileList = fileList.concat(groups[group]);
-        return {dir: group, files: groups[group]};
+        return { dir: group, files: groups[group] };
       }));
       if (fileList.length > 1) {
         this.showMenu(true);
@@ -149,8 +202,8 @@ class AppController {
       if (meta._id != id) {
         return;
       }
-      if (lst.length > i+1) {
-        this.setCurrentFile(lst[i+1]);
+      if (lst.length > i + 1) {
+        this.setCurrentFile(lst[i + 1]);
       }
     });
   }
@@ -162,7 +215,7 @@ class AppController {
         return;
       }
       if (i > 0) {
-        this.setCurrentFile(lst[i-1]);
+        this.setCurrentFile(lst[i - 1]);
       }
     });
   }
@@ -225,18 +278,18 @@ window.App = (config) => {
         m("style", style),
         m(`#sidebar.sidebar-show-${ctrl.showMenu()}`,
           m(".sidebar-inner",
-            m("a.sidebar-header", {href: "https://github.com/octavore/delta"}, "Delta"),
+            m("a.sidebar-header", { href: "https://github.com/octavore/delta" }, "Delta"),
             sidebar(metadata.dir, ctrl)
           )
         ),
-        m("#diff", ctrl.currentFile() == null ? null :
-          [
+        m("#diff",
+          ctrl.currentFile() == null ? null : [
             m(".diff-row.diff-row-headers",
               ctrl.currentFile().merged != null ?
                 m(".diff-pane", ctrl.currentFile().merged) : [
-                m(".diff-pane", ctrl.currentFile().from),
-                m(".diff-pane", ctrl.currentFile().to)
-              ]
+                  m(".diff-pane", ctrl.currentFile().from),
+                  m(".diff-pane", ctrl.currentFile().to)
+                ]
             ),
             m(".diff-row-padding"),
             m(`.diff-row.diff-context-${ctrl.showContext()}.diff-empty-${ctrl.showEmpty()}`, {
